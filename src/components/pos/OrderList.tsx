@@ -1,6 +1,7 @@
 // Shared order list for Orders and Kitchen pages.
 import type { Order, OrderStatus } from "@/types/pos";
 import { StatusBadge } from "@/components/pos/StatusBadge";
+import { formatIDR } from "@/lib/currency";
 
 const statuses: OrderStatus[] = ["new", "preparing", "done"];
 
@@ -32,14 +33,14 @@ export function OrderList({
                 {new Date(order.createdAt).toLocaleString()}
               </p>
             </div>
-            <p className="text-xl font-black">${order.total.toFixed(2)}</p>
+            <p className="text-xl font-black">{formatIDR(order.total)}</p>
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
             <div>
               {order.items.map((item) => (
                 <p key={`${order.id}-${item.name}`} className="text-sm font-semibold">
-                  {item.qty} x {item.name} <span className="text-muted">@ ${item.price.toFixed(2)}</span>
+                  {item.qty} x {item.name} <span className="text-muted">@ {formatIDR(item.price)}</span>
                 </p>
               ))}
               {order.notes ? <p className="mt-2 text-sm text-muted">Notes: {order.notes}</p> : null}

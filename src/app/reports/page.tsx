@@ -4,6 +4,7 @@
 import { PageHeader } from "@/components/pos/PageHeader";
 import { StatCard } from "@/components/pos/StatCard";
 import { usePOS } from "@/components/pos/POSProvider";
+import { formatIDR } from "@/lib/currency";
 
 function dateKey(value: string) {
   return new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -42,7 +43,7 @@ export default function ReportsPage() {
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard label="Total orders today" value={String(todayOrders.length)} />
-            <StatCard label="Total sales today" value={`$${todaySales.toFixed(2)}`} />
+            <StatCard label="Total sales today" value={formatIDR(todaySales)} />
             <StatCard label="Best-selling item" value={bestSellingItem ? bestSellingItem[0] : "None"} />
             <StatCard label="Best-selling qty" value={bestSellingItem ? String(bestSellingItem[1]) : "0"} />
           </div>

@@ -7,30 +7,30 @@ export const sampleOrders: Order[] = [
     createdAt: new Date().toISOString(),
     orderNumber: "1001",
     customerName: "Maya",
-    items: [{ name: "Manuk Napinadar", qty: 2, price: 12.5 }],
+    items: [{ name: "Kari - Mie Gomak", qty: 2, price: 35000 }],
     notes: "Extra andaliman",
     status: "new",
-    total: 7.5
+    total: 70000
   },
   {
     id: "order-1002",
     createdAt: new Date().toISOString(),
     orderNumber: "1002",
     customerName: "Jo",
-    items: [{ name: "Mie Gomak", qty: 1, price: 8.75 }],
+    items: [{ name: "Ngarok Siak Tolu - Ayam", qty: 1, price: 48000 }],
     notes: "Medium spice",
     status: "preparing",
-    total: 8.5
+    total: 48000
   },
   {
     id: "order-1003",
     createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
     orderNumber: "0998",
     customerName: "Luis",
-    items: [{ name: "Saksang", qty: 3, price: 11.5 }],
+    items: [{ name: "Kopi - Gula Aren - Dingin", qty: 3, price: 27000 }],
     notes: "",
     status: "done",
-    total: 12.75
+    total: 81000
   }
 ];
 
