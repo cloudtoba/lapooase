@@ -39,9 +39,12 @@ export function OrderList({
           <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
             <div>
               {order.items.map((item) => (
-                <p key={`${order.id}-${item.name}`} className="text-sm font-semibold">
-                  {item.qty} x {item.name} <span className="text-muted">@ {formatIDR(item.price)}</span>
-                </p>
+                <div key={`${order.id}-${item.name}-${item.notes ?? ""}`} className="text-sm">
+                  <p className="font-semibold">
+                    {item.qty} x {item.name} <span className="text-muted">@ {formatIDR(item.price)}</span>
+                  </p>
+                  {item.notes ? <p className="text-xs font-semibold text-muted">Item notes: {item.notes}</p> : null}
+                </div>
               ))}
               {order.notes ? <p className="mt-2 text-sm text-muted">Notes: {order.notes}</p> : null}
             </div>

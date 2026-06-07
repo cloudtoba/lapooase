@@ -76,6 +76,9 @@ function buildReportLines(summary: ReportSummary) {
     }
     order.items.forEach((item) => {
       lines.push(`- ${item.qty} x ${item.name} @ ${money(item.price)} = ${money(item.qty * item.price)}`);
+      if (item.notes) {
+        lines.push(`  Item notes: ${item.notes}`);
+      }
     });
     if (order.notes) {
       lines.push(`Notes: ${order.notes}`);

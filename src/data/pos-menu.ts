@@ -9,6 +9,13 @@ export type MenuChoice = {
   priceDelta?: number;
 };
 
+export type MenuOptionGroup = {
+  id: string;
+  label: string;
+  required?: boolean;
+  options: MenuChoice[];
+};
+
 export type MenuItemDefinition = {
   id: string;
   category: MenuCategory;
@@ -16,6 +23,7 @@ export type MenuItemDefinition = {
   basePrice: number;
   choiceMode: ChoiceMode;
   choices?: MenuChoice[];
+  optionGroups?: MenuOptionGroup[];
   helper?: string;
   temperatureOptions?: MenuChoice[];
 };
@@ -27,15 +35,27 @@ export const menuItems: MenuItemDefinition[] = [
     id: "indomie",
     category: "Food",
     name: "Indomie",
-    basePrice: 0,
-    choiceMode: "single",
-    choices: [
-      { name: "Goreng", price: 15000 },
-      { name: "Kuah", price: 15000 },
-      { name: "Telur", price: 18000 },
-      { name: "Kornet", price: 22000 },
-      { name: "Sosis", price: 22000 },
-      { name: "Spesial (Babi Goreng & Andaliman)", price: 35000 }
+    basePrice: 15000,
+    choiceMode: "none",
+    optionGroups: [
+      {
+        id: "style",
+        label: "Style",
+        required: true,
+        options: [{ name: "Goreng" }, { name: "Kuah" }]
+      },
+      {
+        id: "topping",
+        label: "Topping",
+        required: true,
+        options: [
+          { name: "Polos" },
+          { name: "Telur", priceDelta: 3000 },
+          { name: "Kornet", priceDelta: 7000 },
+          { name: "Sosis", priceDelta: 7000 },
+          { name: "Spesial (Babi Goreng & Andaliman)", priceDelta: 20000 }
+        ]
+      }
     ]
   },
   {
