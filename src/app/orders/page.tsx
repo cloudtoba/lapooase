@@ -37,7 +37,7 @@ function buildOrderItems(item: MenuItemDefinition, choices: string[], temperatur
 
   return choices.map((choiceName) => {
     const choice = item.choices?.find((option) => option.name === choiceName);
-    const price = item.basePrice + (choice?.priceDelta ?? 0) + temperaturePrice;
+    const price = choice?.price ?? item.basePrice + (choice?.priceDelta ?? 0) + temperaturePrice;
     const parts = [item.name, choiceName, temperature].filter(Boolean);
     return { name: parts.join(" - "), qty: quantity, price };
   });
@@ -232,7 +232,8 @@ export default function OrdersPage() {
                       }`}
                     >
                       {choice.name}
-                      {choice.priceDelta ? <span className="block text-xs opacity-80">+{formatIDR(choice.priceDelta)}</span> : null}
+                      {choice.price ? <span className="block text-xs opacity-80">{formatIDR(choice.price)}</span> : null}
+                      {!choice.price && choice.priceDelta ? <span className="block text-xs opacity-80">+{formatIDR(choice.priceDelta)}</span> : null}
                     </button>
                   );
                 })}

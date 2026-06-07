@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { LoginGate } from "@/components/pos/LoginGate";
 import { POSProvider } from "@/components/pos/POSProvider";
 import { PWARegister } from "@/components/pos/PWARegister";
 import { Footer } from "@/components/Footer";
@@ -42,9 +43,11 @@ export default function RootLayout({
       <body className="min-h-screen bg-paper text-ink">
         <POSProvider>
           <PWARegister />
-          <Navbar />
-          <main>{children}</main>
-          <Footer />
+          <LoginGate>
+            <Navbar />
+            <main>{children}</main>
+            <Footer />
+          </LoginGate>
         </POSProvider>
       </body>
     </html>

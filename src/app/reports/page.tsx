@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/pos/PageHeader";
 import { StatCard } from "@/components/pos/StatCard";
 import { usePOS } from "@/components/pos/POSProvider";
 import { formatIDR } from "@/lib/currency";
+import { downloadDailyReportPdf } from "@/lib/report-pdf";
 
 function dateKey(value: string) {
   return new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -30,6 +31,7 @@ export default function ReportsPage() {
     return items;
   }, {});
   const bestSellingItem = Object.entries(itemCounts).sort((a, b) => b[1] - a[1])[0];
+  const todayLabel = new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
 
   return (
     <section className="section">
@@ -41,6 +43,24 @@ export default function ReportsPage() {
 
       {isReady ? (
         <>
+          <div className="mb-4 flex justify-end">
+            <button
+              type="button"
+              onClick={() =>
+                downloadDailyReportPdf({
+                  dateLabel: todayLabel,
+                  totalOrders: todayOrders.length,
+                  totalSales: todaySales,
+                  bestSellingItem,
+                  orders: todayOrders
+                })
+              }
+              className="focus-ring rounded-md bg-ink px-4 py-3 text-sm font-black text-white hover:bg-tomato"
+            >
+              Download PDF
+            </button>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard label="Total orders today" value={String(todayOrders.length)} />
             <StatCard label="Total sales today" value={formatIDR(todaySales)} />

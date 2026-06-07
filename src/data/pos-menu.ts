@@ -1,10 +1,11 @@
 // Structured Lapo Oase menu used by the Orders dropdowns.
-export type MenuCategory = "Food" | "Beverage" | "Snacks/Bites" | "Kids";
+export type MenuCategory = "Food" | "Beverage" | "Snacks/Bites" | "Kids" | "Paket Combo Nobar";
 
 export type ChoiceMode = "none" | "single" | "multi";
 
 export type MenuChoice = {
   name: string;
+  price?: number;
   priceDelta?: number;
 };
 
@@ -19,79 +20,77 @@ export type MenuItemDefinition = {
   temperatureOptions?: MenuChoice[];
 };
 
-export const menuCategories: MenuCategory[] = ["Food", "Beverage", "Snacks/Bites", "Kids"];
+export const menuCategories: MenuCategory[] = ["Food", "Beverage", "Snacks/Bites", "Kids", "Paket Combo Nobar"];
 
 export const menuItems: MenuItemDefinition[] = [
   {
-    id: "kari",
+    id: "indomie",
     category: "Food",
-    name: "Kari",
-    basePrice: 35000,
-    choiceMode: "multi",
-    helper: "Choose one or more bases, or apply all.",
-    choices: [{ name: "Nasi" }, { name: "Bubur" }, { name: "Mie Gomak" }, { name: "Bihun" }]
-  },
-  {
-    id: "sup",
-    category: "Food",
-    name: "Sup",
-    basePrice: 32000,
-    choiceMode: "multi",
-    helper: "Choose one or more bases, or apply all.",
-    choices: [{ name: "Nasi" }, { name: "Bubur" }, { name: "Mie Gomak" }, { name: "Bihun" }]
-  },
-  {
-    id: "ngarok-siak-tolu",
-    category: "Food",
-    name: "Ngarok Siak Tolu",
-    basePrice: 48000,
+    name: "Indomie",
+    basePrice: 0,
     choiceMode: "single",
-    helper: "Pick only one protein.",
-    choices: [{ name: "Babi" }, { name: "Ikan Mujahir" }, { name: "Ayam" }]
+    choices: [
+      { name: "Goreng", price: 15000 },
+      { name: "Kuah", price: 15000 },
+      { name: "Telur", price: 18000 },
+      { name: "Kornet", price: 22000 },
+      { name: "Sosis", price: 22000 },
+      { name: "Spesial (Babi Goreng & Andaliman)", price: 35000 }
+    ]
   },
   {
-    id: "goreng-xo",
+    id: "nasi-goreng",
     category: "Food",
-    name: "Goreng XO",
-    basePrice: 38000,
+    name: "Nasi Goreng",
+    basePrice: 0,
     choiceMode: "single",
-    choices: [{ name: "Nasi" }, { name: "Mie Gomak Lidi" }, { name: "Bihun" }, { name: "Ifumie" }, { name: "Kwetiaw" }]
+    choices: [
+      { name: "Original", price: 15000 },
+      { name: "Telur", price: 18000 },
+      { name: "Kornet", price: 22000 },
+      { name: "Sosis", price: 22000 },
+      { name: "Spesial (Babi Goreng & Andaliman)", price: 35000 }
+    ]
   },
+  { id: "tuak", category: "Beverage", name: "Tuak", basePrice: 5000, choiceMode: "none" },
   {
-    id: "goreng-kampung",
-    category: "Food",
-    name: "Goreng Kampung",
-    basePrice: 36000,
+    id: "bandrek",
+    category: "Beverage",
+    name: "Bandrek",
+    basePrice: 0,
     choiceMode: "single",
-    choices: [{ name: "Nasi" }, { name: "Mie Gomak Lidi" }, { name: "Bihun" }, { name: "Ifumie" }, { name: "Kwetiaw" }]
+    choices: [
+      { name: "Original", price: 15000 },
+      { name: "Susu", price: 20000 }
+    ]
   },
-  {
-    id: "goreng-andaliman",
-    category: "Food",
-    name: "Goreng Andaliman",
-    basePrice: 39000,
-    choiceMode: "single",
-    choices: [{ name: "Nasi" }, { name: "Mie Gomak Lidi" }, { name: "Bihun" }, { name: "Ifumie" }, { name: "Kwetiaw" }]
-  },
-  { id: "tuak", category: "Beverage", name: "Tuak", basePrice: 18000, choiceMode: "none" },
-  { id: "bandrek", category: "Beverage", name: "Bandrek", basePrice: 18000, choiceMode: "none" },
+  { id: "teh-telur", category: "Beverage", name: "Teh Telur", basePrice: 20000, choiceMode: "none" },
+  { id: "stmj", category: "Beverage", name: "STMJ", basePrice: 25000, choiceMode: "none" },
   {
     id: "teh",
     category: "Beverage",
-    name: "Teh",
-    basePrice: 16000,
+    name: "Teh Manis",
+    basePrice: 0,
     choiceMode: "single",
-    choices: [{ name: "Camomile" }, { name: "Melati" }, { name: "Oolong" }],
-    temperatureOptions: [{ name: "Panas" }, { name: "Dingin", priceDelta: 2000 }]
+    choices: [
+      { name: "Panas", price: 7000 },
+      { name: "Es Teh Manis", price: 10000 }
+    ]
   },
   {
     id: "kopi",
     category: "Beverage",
     name: "Kopi",
-    basePrice: 25000,
+    basePrice: 0,
     choiceMode: "single",
-    choices: [{ name: "Cappucino" }, { name: "Moccacino" }, { name: "Gula Aren" }, { name: "Matcha Latte" }, { name: "Affogato" }],
-    temperatureOptions: [{ name: "Panas" }, { name: "Dingin", priceDelta: 2000 }]
+    choices: [
+      { name: "Tubruk", price: 12000 },
+      { name: "Cappucino", price: 18000 },
+      { name: "Gula Aren", price: 18000 },
+      { name: "Affogato", price: 18000 },
+      { name: "Moccacino", price: 18000 },
+      { name: "Matcha Latte", price: 18000 }
+    ]
   },
   { id: "dimsum", category: "Snacks/Bites", name: "Dimsum", basePrice: 22000, choiceMode: "none" },
   { id: "siomay", category: "Snacks/Bites", name: "Siomay", basePrice: 22000, choiceMode: "none" },
@@ -121,8 +120,29 @@ export const menuItems: MenuItemDefinition[] = [
       { name: "Bacon + Sambal andaliman", priceDelta: 10000 }
     ]
   },
-  { id: "pisang-goreng-gula-aren", category: "Snacks/Bites", name: "Pisang Goreng Gula Aren", basePrice: 22000, choiceMode: "none" },
+  { id: "pisang-goreng-gula-aren", category: "Snacks/Bites", name: "Pisang Goreng Gula Aren (4 pcs)", basePrice: 18000, choiceMode: "none" },
   { id: "banana-split", category: "Kids", name: "Banana Split", basePrice: 24000, choiceMode: "none" },
   { id: "nuggets", category: "Kids", name: "Nuggets", basePrice: 26000, choiceMode: "none" },
-  { id: "gelato", category: "Kids", name: "Gelato", basePrice: 22000, choiceMode: "none" }
+  { id: "gelato", category: "Kids", name: "Gelato", basePrice: 22000, choiceMode: "none" },
+  {
+    id: "paket-1-indomie-telor-es-teh",
+    category: "Paket Combo Nobar",
+    name: "Paket 1 - Indomie Telor + Es Teh",
+    basePrice: 27000,
+    choiceMode: "none"
+  },
+  {
+    id: "paket-2-pisang-kopi-tubruk",
+    category: "Paket Combo Nobar",
+    name: "Paket 2 - Pisang Goreng Gula Aren + Kopi Tubruk",
+    basePrice: 27000,
+    choiceMode: "none"
+  },
+  {
+    id: "paket-3-indomie-telor-bandrek",
+    category: "Paket Combo Nobar",
+    name: "Paket 3 - Indomie Telor + Bandrek",
+    basePrice: 31000,
+    choiceMode: "none"
+  }
 ];

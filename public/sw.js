@@ -1,5 +1,5 @@
 // Minimal app-shell service worker for installability and repeat visits.
-const CACHE_NAME = "lapo-oase-v1";
+const CACHE_NAME = "lapo-oase-v2";
 const APP_SHELL = ["/", "/orders", "/kitchen", "/reports", "/inventory", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

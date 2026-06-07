@@ -40,5 +40,10 @@ export const sampleInventory: InventoryItem[] = [
   { id: "inv-mie-lidi", name: "Mie lidi gomak", stock: 18, unit: "kg" },
   { id: "inv-chicken", name: "Free-range chicken", stock: 14, unit: "kg" },
   { id: "inv-goldfish", name: "Ikan mas", stock: 12, unit: "kg" },
-  { id: "inv-sambal", name: "Sambal tuk-tuk", stock: 8, unit: "jars" }
+  { id: "inv-sambal", name: "Sambal tuk-tuk", stock: 8, unit: "jars" },
+  { id: "inv-indomie", name: "Indomie", stock: 80, unit: "packs" },
+  { id: "inv-telor", name: "Telor", stock: 90, unit: "pcs" },
+  { id: "inv-kopi", name: "Kopi", stock: 8, unit: "kg" },
+  { id: "inv-susu", name: "Susu", stock: 24, unit: "cans" },
+  { id: "inv-tuak", name: "Tuak", stock: 30, unit: "bottles" }
 ];

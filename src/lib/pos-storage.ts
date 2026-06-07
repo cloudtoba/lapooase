@@ -5,7 +5,7 @@ import type { InventoryItem, Order } from "@/types/pos";
 import { sampleInventory, sampleOrders } from "@/data/seed";
 
 const ORDERS_KEY = "lapo-oase-orders-v2";
-const INVENTORY_KEY = "lapo-oase-inventory-v2";
+const INVENTORY_KEY = "lapo-oase-inventory-v3";
 
 function readJson<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") {
