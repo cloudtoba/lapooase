@@ -80,8 +80,8 @@ export const menuItems: MenuItemDefinition[] = [
     basePrice: 0,
     choiceMode: "single",
     choices: [
-      { name: "Original", price: 15000 },
-      { name: "Susu", price: 20000 }
+      { name: "Original", price: 12000 },
+      { name: "Susu", price: 15000 }
     ]
   },
   { id: "teh-telur", category: "Beverage", name: "Teh Telur", basePrice: 15000, choiceMode: "none" },
