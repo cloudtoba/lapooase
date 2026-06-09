@@ -50,7 +50,7 @@ export const menuItems: MenuItemDefinition[] = [
         required: true,
         options: [
           { name: "Polos" },
-          { name: "Telur", priceDelta: 3000 },
+          { name: "Telur", priceDelta: 5000 },
           { name: "Kornet", priceDelta: 7000 },
           { name: "Sosis", priceDelta: 7000 },
           { name: "Spesial (Babi Goreng & Andaliman)", priceDelta: 20000 }
@@ -84,8 +84,8 @@ export const menuItems: MenuItemDefinition[] = [
       { name: "Susu", price: 20000 }
     ]
   },
-  { id: "teh-telur", category: "Beverage", name: "Teh Telur", basePrice: 20000, choiceMode: "none" },
-  { id: "stmj", category: "Beverage", name: "STMJ", basePrice: 25000, choiceMode: "none" },
+  { id: "teh-telur", category: "Beverage", name: "Teh Telur", basePrice: 15000, choiceMode: "none" },
+  { id: "stmj", category: "Beverage", name: "STMJ", basePrice: 20000, choiceMode: "none" },
   {
     id: "teh",
     category: "Beverage",
@@ -106,10 +106,11 @@ export const menuItems: MenuItemDefinition[] = [
     choices: [
       { name: "Tubruk", price: 12000 },
       { name: "Cappucino", price: 18000 },
-      { name: "Gula Aren", price: 18000 },
+      { name: "Gula Aren", price: 25000 },
       { name: "Affogato", price: 18000 },
       { name: "Moccacino", price: 18000 },
-      { name: "Matcha Latte", price: 18000 }
+      { name: "Matcha Latte", price: 25000 },
+      { name: "Vanilla Latte", price: 25000 }
     ]
   },
   { id: "dimsum", category: "Snacks/Bites", name: "Dimsum", basePrice: 22000, choiceMode: "none" },
@@ -148,21 +149,21 @@ export const menuItems: MenuItemDefinition[] = [
     id: "paket-1-indomie-telor-es-teh",
     category: "Paket Combo Nobar",
     name: "Paket 1 - Indomie Telor + Es Teh",
-    basePrice: 27000,
+    basePrice: 28000,
     choiceMode: "none"
   },
   {
     id: "paket-2-pisang-kopi-tubruk",
     category: "Paket Combo Nobar",
     name: "Paket 2 - Pisang Goreng Gula Aren + Kopi Tubruk",
-    basePrice: 27000,
+    basePrice: 30000,
     choiceMode: "none"
   },
   {
-    id: "paket-3-indomie-telor-bandrek",
+    id: "paket-3-indomie-telor-bandrek-susu",
     category: "Paket Combo Nobar",
     name: "Paket 3 - Indomie Telor + Bandrek",
-    basePrice: 31000,
+    basePrice: 33000,
     choiceMode: "none"
   }
 ];
