@@ -1,5 +1,5 @@
 // Structured Lapo Oase menu used by the Orders dropdowns.
-export type MenuCategory = "Food" | "Beverage" | "Snacks/Bites" | "Kids" | "Paket Combo Nobar";
+export type MenuCategory = "Food" | "Beverage" | "Snacks/Bites" | "Kids" | "Paket Combo Nobar" | "Paket Hemat";
 
 export type ChoiceMode = "none" | "single" | "multi";
 
@@ -28,7 +28,7 @@ export type MenuItemDefinition = {
   temperatureOptions?: MenuChoice[];
 };
 
-export const menuCategories: MenuCategory[] = ["Food", "Beverage", "Snacks/Bites", "Kids", "Paket Combo Nobar"];
+export const menuCategories: MenuCategory[] = ["Food", "Beverage", "Snacks/Bites", "Kids", "Paket Combo Nobar", "Paket Hemat"];
 
 export const menuItems: MenuItemDefinition[] = [
   {
@@ -165,5 +165,9 @@ export const menuItems: MenuItemDefinition[] = [
     name: "Paket 3 - Indomie Telor + Bandrek",
     basePrice: 33000,
     choiceMode: "none"
-  }
+  },
+  { id: "paket-hemat-kopi-hitam", category: "Paket Hemat", name: "Kopi Hitam", basePrice: 7000, choiceMode: "none" },
+  { id: "paket-hemat-teh-manis", category: "Paket Hemat", name: "Teh Manis", basePrice: 5000, choiceMode: "none" },
+  { id: "paket-hemat-teh-manis-dingin", category: "Paket Hemat", name: "Teh Manis Dingin", basePrice: 8000, choiceMode: "none" },
+  { id: "paket-hemat-kopi-susu", category: "Paket Hemat", name: "Kopi Susu", basePrice: 10000, choiceMode: "none" }
 ];
