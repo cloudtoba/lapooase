@@ -1,5 +1,5 @@
-// Structured Lapo Oase menu used by the Orders dropdowns.
-export type MenuCategory = "Food" | "Beverage" | "Snacks/Bites" | "Kids" | "Paket Combo Nobar" | "Paket Hemat";
+// Structured Lapo Oase menu used by the Orders dropdowns. Prices are stored in IDR.
+export type MenuCategory = "Food" | "Snacks" | "Beverage" | "Paket Nobar";
 
 export type ChoiceMode = "none" | "single" | "multi";
 
@@ -28,9 +28,22 @@ export type MenuItemDefinition = {
   temperatureOptions?: MenuChoice[];
 };
 
-export const menuCategories: MenuCategory[] = ["Food", "Beverage", "Snacks/Bites", "Kids", "Paket Combo Nobar", "Paket Hemat"];
+export const menuCategories: MenuCategory[] = ["Food", "Snacks", "Beverage", "Paket Nobar"];
 
 export const menuItems: MenuItemDefinition[] = [
+  {
+    id: "oase-siak-tolu",
+    category: "Food",
+    name: "OASE SIAK TOLU",
+    basePrice: 0,
+    choiceMode: "single",
+    helper: "Nasi + lauk goreng garing + tiga sambal.",
+    choices: [
+      { name: "Manuk / Ayam", price: 30000 },
+      { name: "Pork Belly / Babi", price: 35000 },
+      { name: "Lele", price: 25000 }
+    ]
+  },
   {
     id: "indomie",
     category: "Food",
@@ -52,8 +65,7 @@ export const menuItems: MenuItemDefinition[] = [
           { name: "Polos" },
           { name: "Telur", priceDelta: 5000 },
           { name: "Kornet", priceDelta: 7000 },
-          { name: "Sosis", priceDelta: 7000 },
-          { name: "Spesial (Babi Goreng & Andaliman)", priceDelta: 20000 }
+          { name: "Sosis", priceDelta: 7000 }
         ]
       }
     ]
@@ -62,41 +74,71 @@ export const menuItems: MenuItemDefinition[] = [
     id: "nasi-goreng",
     category: "Food",
     name: "Nasi Goreng",
+    basePrice: 15000,
+    choiceMode: "none",
+    optionGroups: [
+      {
+        id: "topping",
+        label: "Topping",
+        required: true,
+        options: [
+          { name: "Polos" },
+          { name: "Telur", priceDelta: 5000 },
+          { name: "Kornet", priceDelta: 7000 },
+          { name: "Sosis", priceDelta: 7000 }
+        ]
+      }
+    ]
+  },
+  { id: "tambul-babi-goreng-siak-tolu", category: "Snacks", name: "Tambul Pork Belly / Babi Goreng Siak Tolu", basePrice: 45000, choiceMode: "none" },
+  {
+    id: "dimsum-goreng-serba-29",
+    category: "Snacks",
+    name: "Dimsum Goreng Serba 29",
     basePrice: 0,
     choiceMode: "single",
     choices: [
-      { name: "Original", price: 15000 },
-      { name: "Telur", price: 18000 },
-      { name: "Kornet", price: 22000 },
-      { name: "Sosis", price: 22000 },
-      { name: "Spesial (Babi Goreng & Andaliman)", price: 35000 }
+      { name: "Lumpia Udang", price: 29000 },
+      { name: "Bola Udang", price: 29000 },
+      { name: "Pangsit Udang", price: 29000 },
+      { name: "Kwotie / Gyoza", price: 29000 },
+      { name: "Mantao", price: 29000 },
+      { name: "Kimis Naga", price: 29000 },
+      { name: "Ekado", price: 29000 },
+      { name: "Lumpia Keju", price: 29000 }
     ]
   },
-  { id: "tuak", category: "Beverage", name: "Tuak", basePrice: 5000, choiceMode: "none" },
+  { id: "kentang-goreng", category: "Snacks", name: "Kentang Goreng", basePrice: 20000, choiceMode: "none" },
+  { id: "ubi-goreng", category: "Snacks", name: "Ubi Goreng", basePrice: 20000, choiceMode: "none" },
+  { id: "pisang-goreng-gula-aren", category: "Snacks", name: "Pisang Goreng Gula Aren", basePrice: 20000, choiceMode: "none" },
+  { id: "sosis-nuggets", category: "Snacks", name: "Sosis + Nuggets", basePrice: 20000, choiceMode: "none" },
+  { id: "tahu-tempe-goreng", category: "Snacks", name: "Tahu / Tempe Goreng", basePrice: 20000, choiceMode: "none" },
+  {
+    id: "oase-dimsum-crispy-platter",
+    category: "Snacks",
+    name: "OASE Dimsum Crispy Platter",
+    basePrice: 59000,
+    choiceMode: "none",
+    helper: "8 pcs mixed signature dimsum + 2 pilihan saus. Harga launching."
+  },
+  { id: "oase-tuak", category: "Beverage", name: "OASE Tuak", basePrice: 5000, choiceMode: "none" },
   {
     id: "bandrek",
     category: "Beverage",
     name: "Bandrek",
-    basePrice: 0,
+    basePrice: 12000,
     choiceMode: "single",
     choices: [
-      { name: "Original", price: 12000 },
-      { name: "Susu", price: 15000 }
+      { name: "Original", priceDelta: 0 },
+      { name: "Susu", priceDelta: 3000 }
     ]
   },
   { id: "teh-telur", category: "Beverage", name: "Teh Telur", basePrice: 15000, choiceMode: "none" },
-  { id: "stmj", category: "Beverage", name: "STMJ", basePrice: 20000, choiceMode: "none" },
-  {
-    id: "teh",
-    category: "Beverage",
-    name: "Teh Manis",
-    basePrice: 0,
-    choiceMode: "single",
-    choices: [
-      { name: "Panas", price: 7000 },
-      { name: "Es Teh Manis", price: 10000 }
-    ]
-  },
+  { id: "stmj", category: "Beverage", name: "STMJ (Susu Telur Madu Jahe)", basePrice: 20000, choiceMode: "none" },
+  { id: "teh-manis-panas", category: "Beverage", name: "Teh Manis Panas", basePrice: 7000, choiceMode: "none" },
+  { id: "teh-manis-dingin", category: "Beverage", name: "Teh Manis Dingin", basePrice: 10000, choiceMode: "none" },
+  { id: "teh-anti-masuk-angin", category: "Beverage", name: "Teh Anti Masuk Angin", basePrice: 12000, choiceMode: "none" },
+  { id: "oase-latte", category: "Beverage", name: "OASE Latte", basePrice: 19000, choiceMode: "none" },
   {
     id: "kopi",
     category: "Beverage",
@@ -104,70 +146,44 @@ export const menuItems: MenuItemDefinition[] = [
     basePrice: 0,
     choiceMode: "single",
     choices: [
-      { name: "Tubruk", price: 12000 },
-      { name: "Cappucino", price: 18000 },
-      { name: "Gula Aren", price: 25000 },
-      { name: "Affogato", price: 18000 },
-      { name: "Moccacino", price: 18000 },
-      { name: "Matcha Latte", price: 25000 },
-      { name: "Vanilla Latte", price: 25000 }
+      { name: "Kopi Tubruk", price: 12000 },
+      { name: "Black Coffee", price: 10000 },
+      { name: "Americano", price: 12000 },
+      { name: "Cappuccino", price: 17000 },
+      { name: "Mochaccino", price: 18000 },
+      { name: "Latte", price: 16000 }
     ]
   },
-  { id: "dimsum", category: "Snacks/Bites", name: "Dimsum", basePrice: 22000, choiceMode: "none" },
-  { id: "siomay", category: "Snacks/Bites", name: "Siomay", basePrice: 22000, choiceMode: "none" },
+  { id: "choco-lava", category: "Beverage", name: "Choco Lava", basePrice: 17000, choiceMode: "none" },
+  { id: "milo-lava", category: "Beverage", name: "Milo Lava", basePrice: 17000, choiceMode: "none" },
+  { id: "taro-lava", category: "Beverage", name: "Taro Lava", basePrice: 16000, choiceMode: "none" },
+  { id: "matcha-lava", category: "Beverage", name: "Matcha Lava", basePrice: 18000, choiceMode: "none" },
   {
-    id: "kentang-goreng",
-    category: "Snacks/Bites",
-    name: "Kentang Goreng",
-    basePrice: 20000,
-    choiceMode: "single",
-    choices: [
-      { name: "Cheese", priceDelta: 5000 },
-      { name: "Sambal teri kacang", priceDelta: 6000 },
-      { name: "Bacon + Cheese", priceDelta: 10000 },
-      { name: "Bacon + Sambal andaliman", priceDelta: 10000 }
-    ]
-  },
-  {
-    id: "ubi-goreng",
-    category: "Snacks/Bites",
-    name: "Ubi Goreng",
-    basePrice: 20000,
-    choiceMode: "single",
-    choices: [
-      { name: "Cheese", priceDelta: 5000 },
-      { name: "Sambal teri kacang", priceDelta: 6000 },
-      { name: "Bacon + Cheese", priceDelta: 10000 },
-      { name: "Bacon + Sambal andaliman", priceDelta: 10000 }
-    ]
-  },
-  { id: "pisang-goreng-gula-aren", category: "Snacks/Bites", name: "Pisang Goreng Gula Aren (4 pcs)", basePrice: 18000, choiceMode: "none" },
-  { id: "banana-split", category: "Kids", name: "Banana Split", basePrice: 24000, choiceMode: "none" },
-  { id: "nuggets", category: "Kids", name: "Nuggets", basePrice: 26000, choiceMode: "none" },
-  { id: "gelato", category: "Kids", name: "Gelato", basePrice: 22000, choiceMode: "none" },
-  {
-    id: "paket-1-indomie-telor-es-teh",
-    category: "Paket Combo Nobar",
-    name: "Paket 1 - Indomie Telor + Es Teh",
-    basePrice: 28000,
+    id: "paket-tabo",
+    category: "Paket Nobar",
+    name: "Paket Tabo - Dimsum Goreng + Kopi Tubruk",
+    basePrice: 39000,
     choiceMode: "none"
   },
   {
-    id: "paket-2-pisang-kopi-tubruk",
-    category: "Paket Combo Nobar",
-    name: "Paket 2 - Pisang Goreng Gula Aren + Kopi Tubruk",
-    basePrice: 30000,
+    id: "paket-sarbas",
+    category: "Paket Nobar",
+    name: "Paket Sarbas - OASE Siak Tolu Babi + Teh Anti Masuk Angin",
+    basePrice: 45000,
     choiceMode: "none"
   },
   {
-    id: "paket-3-indomie-telor-bandrek-susu",
-    category: "Paket Combo Nobar",
-    name: "Paket 3 - Indomie Telor + Bandrek",
-    basePrice: 33000,
+    id: "paket-mdk",
+    category: "Paket Nobar",
+    name: "Paket MDK - Tambul Babi Goreng Siak Tolu + 2 Gelas Tuak",
+    basePrice: 50000,
     choiceMode: "none"
   },
-  { id: "paket-hemat-kopi-hitam", category: "Paket Hemat", name: "Kopi Hitam", basePrice: 7000, choiceMode: "none" },
-  { id: "paket-hemat-teh-manis", category: "Paket Hemat", name: "Teh Manis", basePrice: 5000, choiceMode: "none" },
-  { id: "paket-hemat-teh-manis-dingin", category: "Paket Hemat", name: "Teh Manis Dingin", basePrice: 8000, choiceMode: "none" },
-  { id: "paket-hemat-kopi-susu", category: "Paket Hemat", name: "Kopi Susu", basePrice: 10000, choiceMode: "none" }
+  {
+    id: "paket-mamora",
+    category: "Paket Nobar",
+    name: "Paket Mamora - Indomie + Telur + Teh Manis Panas",
+    basePrice: 25000,
+    choiceMode: "none"
+  }
 ];
