@@ -1,8 +1,9 @@
 "use client";
 
-// Browser-only persistence helpers. They keep the Lapo Oase MVP backend-free with localStorage.
+// Browser persistence helpers. Supabase is the primary store when configured; localStorage remains the dev fallback.
 import type { InventoryItem, Order } from "@/types/pos";
 import { sampleInventory, sampleOrders } from "@/data/seed";
+import { createSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
 const ORDERS_KEY = "lapo-oase-orders-v2";
 const INVENTORY_KEY = "lapo-oase-inventory-v3";
@@ -36,7 +37,7 @@ export function loadOrders() {
   return readJson<Order[]>(ORDERS_KEY, sampleOrders);
 }
 
-export function saveOrders(orders: Order[]) {
+export function saveOrdersLocal(orders: Order[]) {
   writeJson(ORDERS_KEY, orders);
 }
 
@@ -44,6 +45,166 @@ export function loadInventory() {
   return readJson<InventoryItem[]>(INVENTORY_KEY, sampleInventory);
 }
 
-export function saveInventory(items: InventoryItem[]) {
+export function saveInventoryLocal(items: InventoryItem[]) {
   writeJson(INVENTORY_KEY, items);
+}
+
+export function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    const parts = [record.message, record.details, record.hint, record.code].filter(Boolean);
+
+    if (parts.length) {
+      return parts.join(" ");
+    }
+
+    try {
+      return JSON.stringify(record);
+    } catch {
+      return "Unknown object error";
+    }
+  }
+
+  return String(error);
+}
+
+function toOrder(row: {
+  id: string;
+  created_at: string;
+  order_number: string;
+  customer_name: string | null;
+  notes: string | null;
+  status: Order["status"];
+  total: number;
+  pos_order_items?: {
+    name: string;
+    quantity: number;
+    unit_price: number;
+    notes: string | null;
+  }[];
+}): Order {
+  return {
+    id: row.id,
+    createdAt: row.created_at,
+    orderNumber: row.order_number,
+    customerName: row.customer_name ?? undefined,
+    items:
+      row.pos_order_items?.map((item) => ({
+        name: item.name,
+        qty: item.quantity,
+        price: Number(item.unit_price),
+        notes: item.notes ?? undefined
+      })) ?? [],
+    notes: row.notes ?? undefined,
+    status: row.status,
+    total: Number(row.total)
+  };
+}
+
+export async function loadOrdersRemote() {
+  if (!isSupabaseConfigured()) {
+    return loadOrders();
+  }
+
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("pos_orders")
+    .select("id, created_at, order_number, customer_name, notes, status, total, pos_order_items(name, quantity, unit_price, notes, sort_order)")
+    .order("created_at", { ascending: false })
+    .order("sort_order", { referencedTable: "pos_order_items", ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map(toOrder);
+}
+
+export async function addOrderRemote(order: Order) {
+  if (!isSupabaseConfigured()) {
+    const nextOrders = [order, ...loadOrders()];
+    saveOrdersLocal(nextOrders);
+    return;
+  }
+
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase.rpc("create_pos_order", {
+    order_payload: {
+      id: order.id,
+      created_at: order.createdAt,
+      order_number: order.orderNumber,
+      customer_name: order.customerName ?? null,
+      notes: order.notes ?? null,
+      status: order.status,
+      total: order.total,
+      items: order.items.map((item, index) => ({
+        name: item.name,
+        quantity: item.qty,
+        unit_price: item.price,
+        notes: item.notes ?? null,
+        sort_order: index
+      }))
+    }
+  });
+
+  if (error) {
+    throw new Error(getErrorMessage(error));
+  }
+}
+
+export async function updateOrderStatusRemote(id: string, status: Order["status"], fallbackOrders: Order[]) {
+  if (!isSupabaseConfigured()) {
+    saveOrdersLocal(fallbackOrders);
+    return;
+  }
+
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase.from("pos_orders").update({ status }).eq("id", id);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function loadInventoryRemote() {
+  if (!isSupabaseConfigured()) {
+    return loadInventory();
+  }
+
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase.from("inventory_items").select("id, name, stock, unit").order("name");
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data?.length) {
+    const { error: seedError } = await supabase.from("inventory_items").upsert(sampleInventory, { onConflict: "id" });
+
+    if (seedError) {
+      throw seedError;
+    }
+
+    return sampleInventory;
+  }
+
+  return data.map((item) => ({ ...item, stock: Number(item.stock) }));
+}
+
+export async function updateStockRemote(id: string, stock: number, fallbackInventory: InventoryItem[]) {
+  if (!isSupabaseConfigured()) {
+    saveInventoryLocal(fallbackInventory);
+    return;
+  }
+
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase.from("inventory_items").update({ stock }).eq("id", id);
+
+  if (error) {
+    throw error;
+  }
 }

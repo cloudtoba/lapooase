@@ -1,6 +1,6 @@
 "use client";
 
-// Inventory screen: stock counts are editable and persisted in localStorage.
+// Inventory screen: stock counts are editable and persisted in the POS store.
 import { PageHeader } from "@/components/pos/PageHeader";
 import { usePOS } from "@/components/pos/POSProvider";
 
@@ -12,7 +12,7 @@ export default function InventoryPage() {
       <PageHeader
         eyebrow="Back of house"
         title="Inventory"
-        description="Keep simple stock quantities for Batak kitchen ingredients and supplies. Changes save automatically in this browser."
+        description="Keep simple stock quantities for Batak kitchen ingredients and supplies. Changes save automatically."
       />
 
       <div className="app-panel overflow-hidden">

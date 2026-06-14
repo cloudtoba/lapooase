@@ -1,18 +1,19 @@
 "use client";
 
-// Reports screen: derives daily sales and item summaries from locally saved orders.
+// Reports screen: derives daily sales and item summaries from saved POS orders.
 import { PageHeader } from "@/components/pos/PageHeader";
 import { StatCard } from "@/components/pos/StatCard";
 import { usePOS } from "@/components/pos/POSProvider";
 import { formatIDR } from "@/lib/currency";
 import { downloadDailyReportPdf } from "@/lib/report-pdf";
+import { formatJakartaDate, formatJakartaDateShort, jakartaDayKey } from "@/lib/timezone";
 
 function dateKey(value: string) {
-  return new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return formatJakartaDateShort(value);
 }
 
 function isToday(value: string) {
-  return new Date(value).toDateString() === new Date().toDateString();
+  return jakartaDayKey(value) === jakartaDayKey(new Date());
 }
 
 export default function ReportsPage() {
@@ -31,14 +32,14 @@ export default function ReportsPage() {
     return items;
   }, {});
   const bestSellingItem = Object.entries(itemCounts).sort((a, b) => b[1] - a[1])[0];
-  const todayLabel = new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+  const todayLabel = formatJakartaDate(new Date());
 
   return (
     <section className="section">
       <PageHeader
         eyebrow="Lapo numbers"
         title="Reports"
-        description="A lightweight readout from local order history, enough for an MVP daily check-in."
+        description="A lightweight readout from saved order history, enough for an MVP daily check-in."
       />
 
       {isReady ? (

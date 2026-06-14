@@ -1,6 +1,6 @@
 "use client";
 
-// Orders screen: staff build one customer ticket from multiple menu items, then save it locally.
+// Orders screen: staff build one customer ticket from multiple menu items, then save it to the POS store.
 import { FormEvent, useMemo, useState } from "react";
 import { Plus, Save, Trash2, X } from "lucide-react";
 import { OrderList } from "@/components/pos/OrderList";

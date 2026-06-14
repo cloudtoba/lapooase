@@ -1,8 +1,8 @@
 "use client";
 
-// React context for the whole POS. It keeps state management simple and syncs changes to localStorage.
+// React context for the whole POS. It keeps state management simple and syncs changes to Supabase when configured.
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { loadInventory, loadOrders, saveInventory, saveOrders } from "@/lib/pos-storage";
+import { addOrderRemote, getErrorMessage, loadInventoryRemote, loadOrdersRemote, updateOrderStatusRemote, updateStockRemote } from "@/lib/pos-storage";
 import type { InventoryItem, Order, OrderStatus } from "@/types/pos";
 
 type POSContextValue = {
@@ -22,33 +22,57 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    setOrders(loadOrders());
-    setInventory(loadInventory());
-    setIsReady(true);
+    let isMounted = true;
+
+    async function loadData() {
+      try {
+        const [nextOrders, nextInventory] = await Promise.all([loadOrdersRemote(), loadInventoryRemote()]);
+
+        if (isMounted) {
+          setOrders(nextOrders);
+          setInventory(nextInventory);
+        }
+      } catch (error) {
+        console.error(`Failed to load POS data: ${getErrorMessage(error)}`, error);
+      } finally {
+        if (isMounted) {
+          setIsReady(true);
+        }
+      }
+    }
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
-
-  useEffect(() => {
-    if (isReady) {
-      saveOrders(orders);
-    }
-  }, [isReady, orders]);
-
-  useEffect(() => {
-    if (isReady) {
-      saveInventory(inventory);
-    }
-  }, [inventory, isReady]);
 
   const value = useMemo<POSContextValue>(
     () => ({
       orders,
       inventory,
       isReady,
-      addOrder: (order) => setOrders((current) => [order, ...current]),
-      updateOrderStatus: (id, status) =>
-        setOrders((current) => current.map((order) => (order.id === id ? { ...order, status } : order))),
-      updateStock: (id, stock) =>
-        setInventory((current) => current.map((item) => (item.id === id ? { ...item, stock } : item)))
+      addOrder: (order) => {
+        setOrders((current) => [order, ...current]);
+        void addOrderRemote(order).catch((error) => {
+          console.error(`Failed to save order: ${getErrorMessage(error)}`, error);
+        });
+      },
+      updateOrderStatus: (id, status) => {
+        const nextOrders = orders.map((order) => (order.id === id ? { ...order, status } : order));
+        setOrders(nextOrders);
+        void updateOrderStatusRemote(id, status, nextOrders).catch((error) => {
+          console.error(`Failed to update order status: ${getErrorMessage(error)}`, error);
+        });
+      },
+      updateStock: (id, stock) => {
+        const nextInventory = inventory.map((item) => (item.id === id ? { ...item, stock } : item));
+        setInventory(nextInventory);
+        void updateStockRemote(id, stock, nextInventory).catch((error) => {
+          console.error(`Failed to update inventory stock: ${getErrorMessage(error)}`, error);
+        });
+      }
     }),
     [inventory, isReady, orders]
   );

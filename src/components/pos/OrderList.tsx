@@ -2,6 +2,7 @@
 import type { Order, OrderStatus } from "@/types/pos";
 import { StatusBadge } from "@/components/pos/StatusBadge";
 import { formatIDR } from "@/lib/currency";
+import { formatJakartaDateTime } from "@/lib/timezone";
 
 const statuses: OrderStatus[] = ["new", "preparing", "done"];
 
@@ -30,7 +31,7 @@ export function OrderList({
               </div>
               <p className="mt-1 text-sm text-muted">
                 {order.customerName ? `${order.customerName} · ` : ""}
-                {new Date(order.createdAt).toLocaleString()}
+                {formatJakartaDateTime(order.createdAt)}
               </p>
             </div>
             <p className="text-xl font-black">{formatIDR(order.total)}</p>

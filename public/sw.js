@@ -21,9 +21,19 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  const url = new URL(event.request.url);
+
+  if (url.pathname.startsWith("/_next/")) {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
+        if (!response.ok) {
+          return response;
+        }
+
         const copy = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
         return response;

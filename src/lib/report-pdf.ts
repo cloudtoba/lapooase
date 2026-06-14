@@ -2,6 +2,7 @@
 
 // Small browser-side PDF writer for simple text reports without adding a PDF dependency.
 import { formatIDR } from "@/lib/currency";
+import { formatJakartaTime, jakartaDayKey } from "@/lib/timezone";
 import type { Order } from "@/types/pos";
 
 type ReportSummary = {
@@ -70,7 +71,7 @@ function buildReportLines(summary: ReportSummary) {
 
   summary.orders.forEach((order) => {
     lines.push("");
-    lines.push(`Order #${order.orderNumber} | ${new Date(order.createdAt).toLocaleTimeString()} | ${order.status.toUpperCase()}`);
+    lines.push(`Order #${order.orderNumber} | ${formatJakartaTime(order.createdAt)} | ${order.status.toUpperCase()}`);
     if (order.customerName) {
       lines.push(`Customer: ${order.customerName}`);
     }
@@ -150,7 +151,7 @@ export function downloadDailyReportPdf(summary: ReportSummary) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `lapo-oase-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+  link.download = `lapo-oase-report-${jakartaDayKey(new Date())}.pdf`;
   link.click();
   URL.revokeObjectURL(url);
 }

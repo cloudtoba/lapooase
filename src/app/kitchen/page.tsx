@@ -15,7 +15,7 @@ export default function KitchenPage() {
       <PageHeader
         eyebrow="Kitchen display"
         title="Incoming orders"
-        description="Move tickets between new, preparing, and done. The same local data powers the Orders and Reports pages."
+        description="Move tickets between new, preparing, and done. The same saved data powers the Orders and Reports pages."
       />
 
       <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
