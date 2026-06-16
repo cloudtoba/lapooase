@@ -79,14 +79,26 @@ function toOrder(row: {
   customer_name: string | null;
   notes: string | null;
   status: Order["status"];
+  subtotal: number | null;
+  discount_type: Order["discountType"] | null;
+  discount_label: string | null;
+  discount_rate: number | null;
+  discount_amount: number | null;
   total: number;
   pos_order_items?: {
     name: string;
     quantity: number;
     unit_price: number;
+    category: string | null;
     notes: string | null;
+    gross_line_total: number | null;
+    discount_amount: number | null;
+    net_line_total: number | null;
   }[];
 }): Order {
+  const total = Number(row.total);
+  const discountAmount = Number(row.discount_amount ?? 0);
+
   return {
     id: row.id,
     createdAt: row.created_at,
@@ -97,11 +109,20 @@ function toOrder(row: {
         name: item.name,
         qty: item.quantity,
         price: Number(item.unit_price),
-        notes: item.notes ?? undefined
+        category: item.category ?? undefined,
+        notes: item.notes ?? undefined,
+        grossLineTotal: item.gross_line_total === null ? undefined : Number(item.gross_line_total),
+        discountAmount: item.discount_amount === null ? undefined : Number(item.discount_amount),
+        netLineTotal: item.net_line_total === null ? undefined : Number(item.net_line_total)
       })) ?? [],
     notes: row.notes ?? undefined,
     status: row.status,
-    total: Number(row.total)
+    subtotal: row.subtotal === null ? total + discountAmount : Number(row.subtotal),
+    discountType: row.discount_type ?? "none",
+    discountLabel: row.discount_label ?? undefined,
+    discountRate: row.discount_rate === null ? 0 : Number(row.discount_rate),
+    discountAmount,
+    total
   };
 }
 
@@ -113,7 +134,9 @@ export async function loadOrdersRemote() {
   const supabase = createSupabaseBrowserClient();
   const { data, error } = await supabase
     .from("pos_orders")
-    .select("id, created_at, order_number, customer_name, notes, status, total, pos_order_items(name, quantity, unit_price, notes, sort_order)")
+    .select(
+      "id, created_at, order_number, customer_name, notes, status, subtotal, discount_type, discount_label, discount_rate, discount_amount, total, pos_order_items(name, quantity, unit_price, category, notes, gross_line_total, discount_amount, net_line_total, sort_order)"
+    )
     .order("created_at", { ascending: false })
     .order("sort_order", { referencedTable: "pos_order_items", ascending: true });
 
@@ -140,12 +163,21 @@ export async function addOrderRemote(order: Order) {
       customer_name: order.customerName ?? null,
       notes: order.notes ?? null,
       status: order.status,
+      subtotal: order.subtotal ?? order.total,
+      discount_type: order.discountType ?? "none",
+      discount_label: order.discountLabel ?? null,
+      discount_rate: order.discountRate ?? 0,
+      discount_amount: order.discountAmount ?? 0,
       total: order.total,
       items: order.items.map((item, index) => ({
         name: item.name,
         quantity: item.qty,
         unit_price: item.price,
+        category: item.category ?? null,
         notes: item.notes ?? null,
+        gross_line_total: item.grossLineTotal ?? item.qty * item.price,
+        discount_amount: item.discountAmount ?? 0,
+        net_line_total: item.netLineTotal ?? item.qty * item.price,
         sort_order: index
       }))
     }
@@ -183,12 +215,6 @@ export async function loadInventoryRemote() {
   }
 
   if (!data?.length) {
-    const { error: seedError } = await supabase.from("inventory_items").upsert(sampleInventory, { onConflict: "id" });
-
-    if (seedError) {
-      throw seedError;
-    }
-
     return sampleInventory;
   }
 

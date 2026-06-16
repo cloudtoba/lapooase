@@ -47,6 +47,18 @@ export function OrderList({
                   {item.notes ? <p className="text-xs font-semibold text-muted">Item notes: {item.notes}</p> : null}
                 </div>
               ))}
+              {order.discountAmount ? (
+                <div className="mt-3 rounded-md bg-fog p-3 text-sm font-bold text-muted">
+                  <div className="flex justify-between gap-3">
+                    <span>Subtotal</span>
+                    <span>{formatIDR(order.subtotal ?? order.total + order.discountAmount)}</span>
+                  </div>
+                  <div className="mt-1 flex justify-between gap-3">
+                    <span>{order.discountLabel ?? "Discount"}</span>
+                    <span>-{formatIDR(order.discountAmount)}</span>
+                  </div>
+                </div>
+              ) : null}
               {order.notes ? <p className="mt-2 text-sm text-muted">Notes: {order.notes}</p> : null}
             </div>
 

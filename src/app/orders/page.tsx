@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/pos/PageHeader";
 import { usePOS } from "@/components/pos/POSProvider";
 import { menuCategories, menuItems, type MenuCategory, type MenuItemDefinition } from "@/data/pos-menu";
 import { formatIDR } from "@/lib/currency";
-import type { OrderItem } from "@/types/pos";
+import type { DiscountType, OrderItem } from "@/types/pos";
 import type { Order } from "@/types/pos";
 
 type TicketItem = OrderItem & {
@@ -20,7 +20,11 @@ function toOrderItem(item: TicketItem): OrderItem {
     name: item.name,
     qty: item.qty,
     price: item.price,
-    notes: item.notes
+    category: item.category,
+    notes: item.notes,
+    grossLineTotal: item.grossLineTotal,
+    discountAmount: item.discountAmount,
+    netLineTotal: item.netLineTotal
   };
 }
 
@@ -58,7 +62,7 @@ function buildOptionGroupItem(item: MenuItemDefinition, optionGroups: Record<str
   const optionText = primaryOption ? `${primaryOption}${extraOptions.length ? ` + ${extraOptions.join(" + ")}` : ""}` : "";
   const parts = [`${item.name}${optionText ? ` ${optionText}` : ""}`, temperature].filter(Boolean);
 
-  return { name: parts.join(" - "), qty: quantity, price };
+  return { name: parts.join(" - "), qty: quantity, price, category: item.category };
 }
 
 function buildOrderItems(item: MenuItemDefinition, choices: string[], optionGroups: Record<string, string>, temperature: string, quantity: number): OrderItem[] {
@@ -70,14 +74,57 @@ function buildOrderItems(item: MenuItemDefinition, choices: string[], optionGrou
   }
 
   if (item.choiceMode === "none") {
-    return [{ name: item.name, qty: quantity, price: item.basePrice + temperaturePrice }];
+    return [{ name: item.name, qty: quantity, price: item.basePrice + temperaturePrice, category: item.category }];
   }
 
   return choices.map((choiceName) => {
     const choice = item.choices?.find((option) => option.name === choiceName);
     const price = choice?.price ?? item.basePrice + (choice?.priceDelta ?? 0) + temperaturePrice;
     const parts = [item.name, choiceName, temperature].filter(Boolean);
-    return { name: parts.join(" - "), qty: quantity, price };
+    return { name: parts.join(" - "), qty: quantity, price, category: item.category };
+  });
+}
+
+function buildCustomOrderItems(description: string, price: string, quantity: number): OrderItem[] {
+  const normalizedDescription = description.trim();
+  const numericPrice = Number(price);
+
+  if (!normalizedDescription || !Number.isFinite(numericPrice) || numericPrice <= 0 || quantity < 1) {
+    return [];
+  }
+
+  return [{ name: `Custom - ${normalizedDescription}`, qty: quantity, price: numericPrice, category: "Custom" }];
+}
+
+function getDiscountConfig(type: DiscountType, customRate: string) {
+  if (type === "opening_10") {
+    return { label: "Opening promo 10%", rate: 0.1 };
+  }
+
+  if (type === "google_review_20") {
+    return { label: "Google review 20%", rate: 0.2 };
+  }
+
+  if (type === "custom") {
+    const rate = Number(customRate);
+    return Number.isFinite(rate) && rate > 0 ? { label: `Custom ${rate}%`, rate: Math.min(rate, 100) / 100 } : { label: "Custom discount", rate: 0 };
+  }
+
+  return { label: "No discount", rate: 0 };
+}
+
+function applyDiscount(items: TicketItem[], discountRate: number): TicketItem[] {
+  return items.map((item) => {
+    const grossLineTotal = item.qty * item.price;
+    const discountAmount = Math.round(grossLineTotal * discountRate);
+    const netLineTotal = grossLineTotal - discountAmount;
+
+    return {
+      ...item,
+      grossLineTotal,
+      discountAmount,
+      netLineTotal
+    };
   });
 }
 
@@ -94,16 +141,29 @@ export default function OrdersPage() {
   const [selectedOptionGroups, setSelectedOptionGroups] = useState<Record<string, string>>(getDefaultOptionGroups(selectedMenuItem));
   const [temperature, setTemperature] = useState(getDefaultTemperature(selectedMenuItem));
   const [quantity, setQuantity] = useState(1);
+  const [customDescription, setCustomDescription] = useState("");
+  const [customPrice, setCustomPrice] = useState("");
   const [itemNotes, setItemNotes] = useState("");
   const [notes, setNotes] = useState("");
+  const [discountType, setDiscountType] = useState<DiscountType>("none");
+  const [customDiscountRate, setCustomDiscountRate] = useState("");
   const [ticketItems, setTicketItems] = useState<TicketItem[]>([]);
-  const previewItems = buildOrderItems(selectedMenuItem, selectedChoices, selectedOptionGroups, temperature, Math.max(quantity, 1));
+  const isCustomCategory = category === "Custom";
+  const previewItems = isCustomCategory
+    ? buildCustomOrderItems(customDescription, customPrice, Math.max(quantity, 1))
+    : buildOrderItems(selectedMenuItem, selectedChoices, selectedOptionGroups, temperature, Math.max(quantity, 1));
   const previewTotal = previewItems.reduce((sum, item) => sum + item.qty * item.price, 0);
-  const ticketTotal = ticketItems.reduce((sum, item) => sum + item.qty * item.price, 0);
+  const discountConfig = getDiscountConfig(discountType, customDiscountRate);
+  const ticketSubtotal = ticketItems.reduce((sum, item) => sum + item.qty * item.price, 0);
+  const discountedTicketItems = applyDiscount(ticketItems, discountConfig.rate);
+  const ticketDiscountAmount = discountedTicketItems.reduce((sum, item) => sum + (item.discountAmount ?? 0), 0);
+  const ticketTotal = discountedTicketItems.reduce((sum, item) => sum + (item.netLineTotal ?? item.qty * item.price), 0);
 
   function selectCategory(nextCategory: MenuCategory) {
     const nextItem = menuItems.find((item) => item.category === nextCategory) ?? menuItems[0];
     setCategory(nextCategory);
+    setCustomDescription("");
+    setCustomPrice("");
     setMenuItemId(nextItem.id);
     setSelectedChoices(getDefaultChoices(nextItem));
     setSelectedOptionGroups(getDefaultOptionGroups(nextItem));
@@ -170,6 +230,8 @@ export default function OrdersPage() {
 
     setQuantity(1);
     setItemNotes("");
+    setCustomDescription("");
+    setCustomPrice("");
   }
 
   function removeTicketItem(lineId: string) {
@@ -188,6 +250,8 @@ export default function OrdersPage() {
   function clearTicket() {
     setTicketItems([]);
     setNotes("");
+    setDiscountType("none");
+    setCustomDiscountRate("");
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -202,9 +266,14 @@ export default function OrdersPage() {
       createdAt: new Date().toISOString(),
       orderNumber: orderNumber.trim() || suggestedOrderNumber,
       customerName: customerName.trim() || undefined,
-      items: ticketItems.map(toOrderItem),
+      items: discountedTicketItems.map(toOrderItem),
       notes: notes.trim() || undefined,
       status: "new",
+      subtotal: ticketSubtotal,
+      discountType,
+      discountLabel: discountConfig.label,
+      discountRate: discountConfig.rate,
+      discountAmount: ticketDiscountAmount,
       total: ticketTotal
     });
 
@@ -213,8 +282,12 @@ export default function OrdersPage() {
     setCategory("Food");
     selectMenuItem(menuItems[0].id);
     setQuantity(1);
+    setCustomDescription("");
+    setCustomPrice("");
     setItemNotes("");
     setNotes("");
+    setDiscountType("none");
+    setCustomDiscountRate("");
     setTicketItems([]);
   }
 
@@ -281,103 +354,139 @@ export default function OrdersPage() {
             </select>
           </div>
 
-          <div>
-            <label className="text-sm font-bold" htmlFor="menuItem">
-              Menu
-            </label>
-            <select
-              id="menuItem"
-              value={menuItemId}
-              onChange={(event) => selectMenuItem(event.target.value)}
-              className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
-            >
-              {filteredItems.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
+          {isCustomCategory ? (
+            <>
+              <div>
+                <label className="text-sm font-bold" htmlFor="customDescription">
+                  Custom order
+                </label>
+                <textarea
+                  id="customDescription"
+                  value={customDescription}
+                  onChange={(event) => setCustomDescription(event.target.value)}
+                  rows={3}
+                  placeholder="Example: telor setengah matang"
+                  className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-bold" htmlFor="customPrice">
+                  Custom price
+                </label>
+                <input
+                  id="customPrice"
+                  min={1}
+                  inputMode="numeric"
+                  type="number"
+                  value={customPrice}
+                  onChange={(event) => setCustomPrice(event.target.value)}
+                  placeholder="Example: 10000"
+                  className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <label className="text-sm font-bold" htmlFor="menuItem">
+                  Menu
+                </label>
+                <select
+                  id="menuItem"
+                  value={menuItemId}
+                  onChange={(event) => selectMenuItem(event.target.value)}
+                  className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
+                >
+                  {filteredItems.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedMenuItem.temperatureOptions ? (
+                <div>
+                  <p className="text-sm font-bold">Temperature</p>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {selectedMenuItem.temperatureOptions.map((option) => (
+                      <button
+                        key={option.name}
+                        type="button"
+                        onClick={() => setTemperature(option.name)}
+                        className={`focus-ring rounded-md border px-3 py-3 text-sm font-bold ${
+                          temperature === option.name ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
+                        }`}
+                      >
+                        {option.name}
+                        {option.priceDelta ? ` +${formatIDR(option.priceDelta)}` : ""}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {selectedMenuItem.optionGroups?.map((group) => (
+                <div key={group.id}>
+                  <p className="text-sm font-bold">{group.label}</p>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    {group.options.map((option) => {
+                      const isSelected = selectedOptionGroups[group.id] === option.name;
+
+                      return (
+                        <button
+                          key={option.name}
+                          type="button"
+                          onClick={() => selectOptionGroup(group.id, option.name)}
+                          className={`focus-ring min-h-12 rounded-md border px-3 py-2 text-left text-sm font-bold ${
+                            isSelected ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
+                          }`}
+                        >
+                          {option.name}
+                          {option.price ? <span className="block text-xs opacity-80">{formatIDR(option.price)}</span> : null}
+                          {option.priceDelta ? <span className="block text-xs opacity-80">+{formatIDR(option.priceDelta)}</span> : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               ))}
-            </select>
-          </div>
 
-          {selectedMenuItem.temperatureOptions ? (
-            <div>
-              <p className="text-sm font-bold">Temperature</p>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {selectedMenuItem.temperatureOptions.map((option) => (
-                  <button
-                    key={option.name}
-                    type="button"
-                    onClick={() => setTemperature(option.name)}
-                    className={`focus-ring rounded-md border px-3 py-3 text-sm font-bold ${
-                      temperature === option.name ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
-                    }`}
-                  >
-                    {option.name}
-                    {option.priceDelta ? ` +${formatIDR(option.priceDelta)}` : ""}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {selectedMenuItem.optionGroups?.map((group) => (
-            <div key={group.id}>
-              <p className="text-sm font-bold">{group.label}</p>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                {group.options.map((option) => {
-                  const isSelected = selectedOptionGroups[group.id] === option.name;
-
-                  return (
-                    <button
-                      key={option.name}
-                      type="button"
-                      onClick={() => selectOptionGroup(group.id, option.name)}
-                      className={`focus-ring min-h-12 rounded-md border px-3 py-2 text-left text-sm font-bold ${
-                        isSelected ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
-                      }`}
-                    >
-                      {option.name}
-                      {option.price ? <span className="block text-xs opacity-80">{formatIDR(option.price)}</span> : null}
-                      {option.priceDelta ? <span className="block text-xs opacity-80">+{formatIDR(option.priceDelta)}</span> : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-
-          {selectedMenuItem.choices?.length ? (
-            <div>
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-bold">{selectedMenuItem.choiceMode === "multi" ? "Choices" : "Choice"}</p>
-                {selectedMenuItem.choiceMode === "multi" ? (
-                  <button type="button" onClick={applyAllChoices} className="focus-ring rounded-md px-2 py-1 text-xs font-black text-ocean">
-                    Apply all
-                  </button>
-                ) : null}
-              </div>
-              {selectedMenuItem.helper ? <p className="mt-1 text-xs font-semibold text-muted">{selectedMenuItem.helper}</p> : null}
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                {selectedMenuItem.choices.map((choice) => {
-                  const isSelected = selectedChoices.includes(choice.name);
-                  return (
-                    <button
-                      key={choice.name}
-                      type="button"
-                      onClick={() => toggleChoice(choice.name)}
-                      className={`focus-ring min-h-12 rounded-md border px-3 py-2 text-left text-sm font-bold ${
-                        isSelected ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
-                      }`}
-                    >
-                      {choice.name}
-                      {choice.price ? <span className="block text-xs opacity-80">{formatIDR(choice.price)}</span> : null}
-                      {!choice.price && choice.priceDelta ? <span className="block text-xs opacity-80">+{formatIDR(choice.priceDelta)}</span> : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
+              {selectedMenuItem.choices?.length ? (
+                <div>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-bold">{selectedMenuItem.choiceMode === "multi" ? "Choices" : "Choice"}</p>
+                    {selectedMenuItem.choiceMode === "multi" ? (
+                      <button type="button" onClick={applyAllChoices} className="focus-ring rounded-md px-2 py-1 text-xs font-black text-ocean">
+                        Apply all
+                      </button>
+                    ) : null}
+                  </div>
+                  {selectedMenuItem.helper ? <p className="mt-1 text-xs font-semibold text-muted">{selectedMenuItem.helper}</p> : null}
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    {selectedMenuItem.choices.map((choice) => {
+                      const isSelected = selectedChoices.includes(choice.name);
+                      return (
+                        <button
+                          key={choice.name}
+                          type="button"
+                          onClick={() => toggleChoice(choice.name)}
+                          className={`focus-ring min-h-12 rounded-md border px-3 py-2 text-left text-sm font-bold ${
+                            isSelected ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
+                          }`}
+                        >
+                          {choice.name}
+                          {choice.price ? <span className="block text-xs opacity-80">{formatIDR(choice.price)}</span> : null}
+                          {!choice.price && choice.priceDelta ? <span className="block text-xs opacity-80">+{formatIDR(choice.priceDelta)}</span> : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+            </>
+          )}
 
           <div>
             <label className="text-sm font-bold" htmlFor="quantity">
@@ -416,7 +525,9 @@ export default function OrdersPage() {
                   </p>
                 ))
               ) : (
-                <p className="text-sm font-semibold text-muted">Pick at least one choice.</p>
+                <p className="text-sm font-semibold text-muted">
+                  {isCustomCategory ? "Add a custom order description and numeric price." : "Pick at least one choice."}
+                </p>
               )}
             </div>
             <p className="mt-3 text-xl font-black">{formatIDR(previewTotal)}</p>
@@ -500,7 +611,7 @@ export default function OrdersPage() {
               ))
             ) : (
               <div className="flex min-h-56 items-center justify-center py-8 text-center text-sm font-semibold text-muted">
-                No items yet. Add food, beverage, snacks, or combo items before saving.
+                No items yet. Add food, beverages, snacks, paket nobar, or custom items before saving.
               </div>
             )}
           </div>
@@ -520,7 +631,53 @@ export default function OrdersPage() {
           </div>
 
           <div className="mt-4 border-t border-ink/10 pt-4">
-            <div className="flex items-center justify-between gap-4">
+            <label className="text-sm font-bold" htmlFor="discountType">
+              Discount
+            </label>
+            <select
+              id="discountType"
+              value={discountType}
+              onChange={(event) => setDiscountType(event.target.value as DiscountType)}
+              className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
+            >
+              <option value="none">No discount</option>
+              <option value="opening_10">Opening promo 10%</option>
+              <option value="google_review_20">Google review 20%</option>
+              <option value="custom">Custom discount</option>
+            </select>
+
+            {discountType === "custom" ? (
+              <div className="mt-3">
+                <label className="text-sm font-bold" htmlFor="customDiscountRate">
+                  Custom discount %
+                </label>
+                <input
+                  id="customDiscountRate"
+                  min={0}
+                  max={100}
+                  inputMode="decimal"
+                  type="number"
+                  value={customDiscountRate}
+                  onChange={(event) => setCustomDiscountRate(event.target.value)}
+                  placeholder="Example: 15"
+                  className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
+                />
+              </div>
+            ) : null}
+          </div>
+
+          <div className="mt-4 border-t border-ink/10 pt-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-4 text-sm font-bold text-muted">
+                <span>Subtotal</span>
+                <span>{formatIDR(ticketSubtotal)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-4 text-sm font-bold text-muted">
+                <span>{discountConfig.label}</span>
+                <span>-{formatIDR(ticketDiscountAmount)}</span>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-4 border-t border-ink/10 pt-3">
               <span className="text-sm font-black uppercase tracking-[0.14em] text-muted">Total</span>
               <span className="text-2xl font-black">{formatIDR(ticketTotal)}</span>
             </div>

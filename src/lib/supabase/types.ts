@@ -95,6 +95,11 @@ export type Database = {
           customer_name: string | null;
           notes: string | null;
           status: "new" | "preparing" | "done";
+          subtotal: number;
+          discount_type: "none" | "opening_10" | "google_review_20" | "custom";
+          discount_label: string | null;
+          discount_rate: number;
+          discount_amount: number;
           total: number;
         };
         Insert: {
@@ -104,6 +109,11 @@ export type Database = {
           customer_name?: string | null;
           notes?: string | null;
           status?: "new" | "preparing" | "done";
+          subtotal?: number;
+          discount_type?: "none" | "opening_10" | "google_review_20" | "custom";
+          discount_label?: string | null;
+          discount_rate?: number;
+          discount_amount?: number;
           total: number;
         };
         Update: {
@@ -112,6 +122,11 @@ export type Database = {
           customer_name?: string | null;
           notes?: string | null;
           status?: "new" | "preparing" | "done";
+          subtotal?: number;
+          discount_type?: "none" | "opening_10" | "google_review_20" | "custom";
+          discount_label?: string | null;
+          discount_rate?: number;
+          discount_amount?: number;
           total?: number;
         };
         Relationships: [];
@@ -123,7 +138,11 @@ export type Database = {
           name: string;
           quantity: number;
           unit_price: number;
+          category: string | null;
           notes: string | null;
+          gross_line_total: number;
+          discount_amount: number;
+          net_line_total: number;
           sort_order: number;
           created_at: string;
         };
@@ -133,7 +152,11 @@ export type Database = {
           name: string;
           quantity: number;
           unit_price: number;
+          category?: string | null;
           notes?: string | null;
+          gross_line_total?: number;
+          discount_amount?: number;
+          net_line_total?: number;
           sort_order?: number;
           created_at?: string;
         };
@@ -142,7 +165,11 @@ export type Database = {
           name?: string;
           quantity?: number;
           unit_price?: number;
+          category?: string | null;
           notes?: string | null;
+          gross_line_total?: number;
+          discount_amount?: number;
+          net_line_total?: number;
           sort_order?: number;
         };
         Relationships: [

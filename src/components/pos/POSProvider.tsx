@@ -25,19 +25,22 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true;
 
     async function loadData() {
-      try {
-        const [nextOrders, nextInventory] = await Promise.all([loadOrdersRemote(), loadInventoryRemote()]);
+      const [ordersResult, inventoryResult] = await Promise.allSettled([loadOrdersRemote(), loadInventoryRemote()]);
 
-        if (isMounted) {
-          setOrders(nextOrders);
-          setInventory(nextInventory);
+      if (isMounted) {
+        if (ordersResult.status === "fulfilled") {
+          setOrders(ordersResult.value);
+        } else {
+          console.error(`Failed to load orders: ${getErrorMessage(ordersResult.reason)}`, ordersResult.reason);
         }
-      } catch (error) {
-        console.error(`Failed to load POS data: ${getErrorMessage(error)}`, error);
-      } finally {
-        if (isMounted) {
-          setIsReady(true);
+
+        if (inventoryResult.status === "fulfilled") {
+          setInventory(inventoryResult.value);
+        } else {
+          console.error(`Failed to load inventory: ${getErrorMessage(inventoryResult.reason)}`, inventoryResult.reason);
         }
+
+        setIsReady(true);
       }
     }
 

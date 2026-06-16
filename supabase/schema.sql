@@ -76,6 +76,11 @@ create table if not exists public.pos_orders (
   customer_name text,
   notes text,
   status text not null default 'new' check (status in ('new', 'preparing', 'done')),
+  subtotal numeric(12, 2) not null default 0 check (subtotal >= 0),
+  discount_type text not null default 'none' check (discount_type in ('none', 'opening_10', 'google_review_20', 'custom')),
+  discount_label text,
+  discount_rate numeric(6, 4) not null default 0 check (discount_rate >= 0),
+  discount_amount numeric(12, 2) not null default 0 check (discount_amount >= 0),
   total numeric(12, 2) not null check (total >= 0)
 );
 
@@ -85,7 +90,11 @@ create table if not exists public.pos_order_items (
   name text not null,
   quantity integer not null check (quantity > 0),
   unit_price numeric(12, 2) not null check (unit_price >= 0),
+  category text,
   notes text,
+  gross_line_total numeric(12, 2) not null default 0,
+  discount_amount numeric(12, 2) not null default 0,
+  net_line_total numeric(12, 2) not null default 0,
   sort_order integer not null default 0,
   created_at timestamptz not null default now()
 );
@@ -136,7 +145,20 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.pos_orders (id, created_at, order_number, customer_name, notes, status, total)
+  insert into public.pos_orders (
+    id,
+    created_at,
+    order_number,
+    customer_name,
+    notes,
+    status,
+    subtotal,
+    discount_type,
+    discount_label,
+    discount_rate,
+    discount_amount,
+    total
+  )
   values (
     order_payload->>'id',
     coalesce((order_payload->>'created_at')::timestamptz, now()),
@@ -144,16 +166,36 @@ begin
     nullif(order_payload->>'customer_name', ''),
     nullif(order_payload->>'notes', ''),
     coalesce(order_payload->>'status', 'new'),
+    coalesce((order_payload->>'subtotal')::numeric, (order_payload->>'total')::numeric, 0),
+    coalesce(order_payload->>'discount_type', 'none'),
+    nullif(order_payload->>'discount_label', ''),
+    coalesce((order_payload->>'discount_rate')::numeric, 0),
+    coalesce((order_payload->>'discount_amount')::numeric, 0),
     coalesce((order_payload->>'total')::numeric, 0)
   );
 
-  insert into public.pos_order_items (order_id, name, quantity, unit_price, notes, sort_order)
+  insert into public.pos_order_items (
+    order_id,
+    name,
+    quantity,
+    unit_price,
+    category,
+    notes,
+    gross_line_total,
+    discount_amount,
+    net_line_total,
+    sort_order
+  )
   select
     order_payload->>'id',
     item->>'name',
     coalesce((item->>'quantity')::integer, 1),
     coalesce((item->>'unit_price')::numeric, 0),
+    nullif(item->>'category', ''),
     nullif(item->>'notes', ''),
+    coalesce((item->>'gross_line_total')::numeric, coalesce((item->>'quantity')::integer, 1) * coalesce((item->>'unit_price')::numeric, 0)),
+    coalesce((item->>'discount_amount')::numeric, 0),
+    coalesce((item->>'net_line_total')::numeric, coalesce((item->>'quantity')::integer, 1) * coalesce((item->>'unit_price')::numeric, 0)),
     coalesce((item->>'sort_order')::integer, 0)
   from jsonb_array_elements(coalesce(order_payload->'items', '[]'::jsonb)) as item;
 end;
@@ -238,7 +280,14 @@ select
   created_at,
   created_at at time zone 'Asia/Jakarta' as created_at_wib,
   (created_at at time zone 'Asia/Jakarta')::date as order_date_wib,
-  date_trunc('month', created_at at time zone 'Asia/Jakarta')::date as order_month_wib
+  date_trunc('month', created_at at time zone 'Asia/Jakarta')::date as order_month_wib,
+  to_char(created_at at time zone 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at_wib_text,
+  date_trunc('hour', created_at at time zone 'Asia/Jakarta') as order_hour_wib,
+  subtotal,
+  discount_type,
+  discount_label,
+  discount_rate,
+  discount_amount
 from public.pos_orders;
 
 create or replace view public.pos_order_items_analytics as
@@ -256,9 +305,44 @@ select
   i.unit_price,
   i.quantity * i.unit_price as line_total,
   i.notes,
-  i.sort_order
+  i.sort_order,
+  o.customer_name,
+  o.total as order_total,
+  to_char(o.created_at at time zone 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at_wib_text,
+  date_trunc('hour', o.created_at at time zone 'Asia/Jakarta') as order_hour_wib,
+  i.category,
+  i.gross_line_total,
+  i.discount_amount,
+  i.net_line_total,
+  o.discount_type,
+  o.discount_label
 from public.pos_order_items i
 join public.pos_orders o on o.id = i.order_id;
 
+create or replace view public.pos_order_details_analytics as
+select
+  o.id,
+  o.order_number,
+  o.customer_name,
+  o.status,
+  o.total,
+  o.created_at,
+  o.created_at at time zone 'Asia/Jakarta' as created_at_wib,
+  to_char(o.created_at at time zone 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at_wib_text,
+  string_agg(
+    concat(i.quantity, 'x ', i.name, ' @ Rp', trim(to_char(i.unit_price, 'FM999G999G999G999'))),
+    E'\n'
+    order by i.sort_order, i.name
+  ) as items,
+  string_agg(
+    concat(i.quantity, 'x ', i.name, ' = Rp', trim(to_char(i.quantity * i.unit_price, 'FM999G999G999G999'))),
+    E'\n'
+    order by i.sort_order, i.name
+  ) as item_totals
+from public.pos_orders o
+left join public.pos_order_items i on i.order_id = o.id
+group by o.id, o.order_number, o.customer_name, o.status, o.total, o.created_at;
+
 grant select on public.pos_orders_analytics to anon, authenticated;
 grant select on public.pos_order_items_analytics to anon, authenticated;
+grant select on public.pos_order_details_analytics to anon, authenticated;

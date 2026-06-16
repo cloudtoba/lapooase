@@ -1,5 +1,5 @@
 // Structured Lapo Oase menu used by the Orders dropdowns. Prices are stored in IDR.
-export type MenuCategory = "Food" | "Snacks" | "Beverage" | "Paket Nobar";
+export type MenuCategory = "Food" | "Snacks" | "Beverages" | "Paket Nobar" | "Custom";
 
 export type ChoiceMode = "none" | "single" | "multi";
 
@@ -28,7 +28,7 @@ export type MenuItemDefinition = {
   temperatureOptions?: MenuChoice[];
 };
 
-export const menuCategories: MenuCategory[] = ["Food", "Snacks", "Beverage", "Paket Nobar"];
+export const menuCategories: MenuCategory[] = ["Food", "Snacks", "Beverages", "Paket Nobar", "Custom"];
 
 export const menuItems: MenuItemDefinition[] = [
   {
@@ -121,10 +121,10 @@ export const menuItems: MenuItemDefinition[] = [
     choiceMode: "none",
     helper: "8 pcs mixed signature dimsum + 2 pilihan saus. Harga launching."
   },
-  { id: "oase-tuak", category: "Beverage", name: "OASE Tuak", basePrice: 5000, choiceMode: "none" },
+  { id: "oase-tuak", category: "Beverages", name: "OASE Tuak", basePrice: 5000, choiceMode: "none" },
   {
     id: "bandrek",
-    category: "Beverage",
+    category: "Beverages",
     name: "Bandrek",
     basePrice: 12000,
     choiceMode: "single",
@@ -133,15 +133,15 @@ export const menuItems: MenuItemDefinition[] = [
       { name: "Susu", priceDelta: 3000 }
     ]
   },
-  { id: "teh-telur", category: "Beverage", name: "Teh Telur", basePrice: 15000, choiceMode: "none" },
-  { id: "stmj", category: "Beverage", name: "STMJ (Susu Telur Madu Jahe)", basePrice: 20000, choiceMode: "none" },
-  { id: "teh-manis-panas", category: "Beverage", name: "Teh Manis Panas", basePrice: 7000, choiceMode: "none" },
-  { id: "teh-manis-dingin", category: "Beverage", name: "Teh Manis Dingin", basePrice: 10000, choiceMode: "none" },
-  { id: "teh-anti-masuk-angin", category: "Beverage", name: "Teh Anti Masuk Angin", basePrice: 12000, choiceMode: "none" },
-  { id: "oase-latte", category: "Beverage", name: "OASE Latte", basePrice: 19000, choiceMode: "none" },
+  { id: "teh-telur", category: "Beverages", name: "Teh Telur", basePrice: 15000, choiceMode: "none" },
+  { id: "stmj", category: "Beverages", name: "STMJ (Susu Telur Madu Jahe)", basePrice: 20000, choiceMode: "none" },
+  { id: "teh-manis-panas", category: "Beverages", name: "Teh Manis Panas", basePrice: 7000, choiceMode: "none" },
+  { id: "teh-manis-dingin", category: "Beverages", name: "Teh Manis Dingin", basePrice: 10000, choiceMode: "none" },
+  { id: "teh-anti-masuk-angin", category: "Beverages", name: "Teh Anti Masuk Angin", basePrice: 12000, choiceMode: "none" },
+  { id: "oase-latte", category: "Beverages", name: "OASE Latte", basePrice: 19000, choiceMode: "none" },
   {
     id: "kopi",
-    category: "Beverage",
+    category: "Beverages",
     name: "Kopi",
     basePrice: 0,
     choiceMode: "single",
@@ -154,10 +154,10 @@ export const menuItems: MenuItemDefinition[] = [
       { name: "Latte", price: 16000 }
     ]
   },
-  { id: "choco-lava", category: "Beverage", name: "Choco Lava", basePrice: 17000, choiceMode: "none" },
-  { id: "milo-lava", category: "Beverage", name: "Milo Lava", basePrice: 17000, choiceMode: "none" },
-  { id: "taro-lava", category: "Beverage", name: "Taro Lava", basePrice: 16000, choiceMode: "none" },
-  { id: "matcha-lava", category: "Beverage", name: "Matcha Lava", basePrice: 18000, choiceMode: "none" },
+  { id: "choco-lava", category: "Beverages", name: "Choco Lava", basePrice: 17000, choiceMode: "none" },
+  { id: "milo-lava", category: "Beverages", name: "Milo Lava", basePrice: 17000, choiceMode: "none" },
+  { id: "taro-lava", category: "Beverages", name: "Taro Lava", basePrice: 16000, choiceMode: "none" },
+  { id: "matcha-lava", category: "Beverages", name: "Matcha Lava", basePrice: 18000, choiceMode: "none" },
   {
     id: "paket-tabo",
     category: "Paket Nobar",
