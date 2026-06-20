@@ -45,13 +45,21 @@ function getDefaultTemperature(item: MenuItemDefinition) {
 }
 
 function getDefaultOptionGroups(item: MenuItemDefinition) {
-  return Object.fromEntries(item.optionGroups?.map((group) => [group.id, group.options[0]?.name ?? ""]) ?? []);
+  return Object.fromEntries(item.optionGroups?.map((group) => [group.id, group.options[0]?.name ? [group.options[0].name] : []]) ?? []);
 }
 
-function buildOptionGroupItem(item: MenuItemDefinition, optionGroups: Record<string, string>, temperature: string, quantity: number): OrderItem {
+function parsePositivePrice(price: string) {
+  const numericPrice = Number(price);
+  return Number.isFinite(numericPrice) && numericPrice > 0 ? numericPrice : null;
+}
+
+function buildOptionGroupItem(item: MenuItemDefinition, optionGroups: Record<string, string[]>, temperature: string, quantity: number): OrderItem {
   const selectedOptions =
     item.optionGroups
-      ?.map((group) => group.options.find((option) => option.name === optionGroups[group.id]))
+      ?.flatMap((group) => {
+        const selectedNames = optionGroups[group.id] ?? [];
+        return selectedNames.map((name) => group.options.find((option) => option.name === name)).filter(Boolean);
+      })
       .filter(Boolean) ?? [];
   const temperatureChoice = item.temperatureOptions?.find((option) => option.name === temperature);
   const price =
@@ -65,7 +73,14 @@ function buildOptionGroupItem(item: MenuItemDefinition, optionGroups: Record<str
   return { name: parts.join(" - "), qty: quantity, price, category: item.category };
 }
 
-function buildOrderItems(item: MenuItemDefinition, choices: string[], optionGroups: Record<string, string>, temperature: string, quantity: number): OrderItem[] {
+function buildOrderItems(
+  item: MenuItemDefinition,
+  choices: string[],
+  optionGroups: Record<string, string[]>,
+  manualChoicePrice: string,
+  temperature: string,
+  quantity: number
+): OrderItem[] {
   const temperatureChoice = item.temperatureOptions?.find((option) => option.name === temperature);
   const temperaturePrice = temperatureChoice?.priceDelta ?? 0;
 
@@ -77,12 +92,22 @@ function buildOrderItems(item: MenuItemDefinition, choices: string[], optionGrou
     return [{ name: item.name, qty: quantity, price: item.basePrice + temperaturePrice, category: item.category }];
   }
 
-  return choices.map((choiceName) => {
+  const orderItems: OrderItem[] = [];
+
+  choices.forEach((choiceName) => {
     const choice = item.choices?.find((option) => option.name === choiceName);
-    const price = choice?.price ?? item.basePrice + (choice?.priceDelta ?? 0) + temperaturePrice;
+    const manualPrice = choice?.manualPrice ? parsePositivePrice(manualChoicePrice) : null;
+
+    if (choice?.manualPrice && !manualPrice) {
+      return;
+    }
+
+    const price = manualPrice ?? choice?.price ?? item.basePrice + (choice?.priceDelta ?? 0) + temperaturePrice;
     const parts = [item.name, choiceName, temperature].filter(Boolean);
-    return { name: parts.join(" - "), qty: quantity, price, category: item.category };
+    orderItems.push({ name: parts.join(" - "), qty: quantity, price, category: item.category });
   });
+
+  return orderItems;
 }
 
 function buildCustomOrderItems(description: string, price: string, quantity: number): OrderItem[] {
@@ -138,20 +163,22 @@ export default function OrdersPage() {
   const [menuItemId, setMenuItemId] = useState(filteredItems[0]?.id ?? menuItems[0].id);
   const selectedMenuItem = menuItems.find((item) => item.id === menuItemId) ?? menuItems[0];
   const [selectedChoices, setSelectedChoices] = useState<string[]>(getDefaultChoices(selectedMenuItem));
-  const [selectedOptionGroups, setSelectedOptionGroups] = useState<Record<string, string>>(getDefaultOptionGroups(selectedMenuItem));
+  const [selectedOptionGroups, setSelectedOptionGroups] = useState<Record<string, string[]>>(getDefaultOptionGroups(selectedMenuItem));
   const [temperature, setTemperature] = useState(getDefaultTemperature(selectedMenuItem));
   const [quantity, setQuantity] = useState(1);
   const [customDescription, setCustomDescription] = useState("");
   const [customPrice, setCustomPrice] = useState("");
+  const [manualChoicePrice, setManualChoicePrice] = useState("");
   const [itemNotes, setItemNotes] = useState("");
   const [notes, setNotes] = useState("");
   const [discountType, setDiscountType] = useState<DiscountType>("none");
   const [customDiscountRate, setCustomDiscountRate] = useState("");
   const [ticketItems, setTicketItems] = useState<TicketItem[]>([]);
   const isCustomCategory = category === "Custom";
+  const selectedManualChoice = selectedMenuItem.choices?.find((choice) => selectedChoices.includes(choice.name) && choice.manualPrice);
   const previewItems = isCustomCategory
     ? buildCustomOrderItems(customDescription, customPrice, Math.max(quantity, 1))
-    : buildOrderItems(selectedMenuItem, selectedChoices, selectedOptionGroups, temperature, Math.max(quantity, 1));
+    : buildOrderItems(selectedMenuItem, selectedChoices, selectedOptionGroups, manualChoicePrice, temperature, Math.max(quantity, 1));
   const previewTotal = previewItems.reduce((sum, item) => sum + item.qty * item.price, 0);
   const discountConfig = getDiscountConfig(discountType, customDiscountRate);
   const ticketSubtotal = ticketItems.reduce((sum, item) => sum + item.qty * item.price, 0);
@@ -164,6 +191,7 @@ export default function OrdersPage() {
     setCategory(nextCategory);
     setCustomDescription("");
     setCustomPrice("");
+    setManualChoicePrice("");
     setMenuItemId(nextItem.id);
     setSelectedChoices(getDefaultChoices(nextItem));
     setSelectedOptionGroups(getDefaultOptionGroups(nextItem));
@@ -176,15 +204,36 @@ export default function OrdersPage() {
     setSelectedChoices(getDefaultChoices(nextItem));
     setSelectedOptionGroups(getDefaultOptionGroups(nextItem));
     setTemperature(getDefaultTemperature(nextItem));
+    setManualChoicePrice("");
   }
 
   function selectOptionGroup(groupId: string, optionName: string) {
-    setSelectedOptionGroups((current) => ({ ...current, [groupId]: optionName }));
+    const group = selectedMenuItem.optionGroups?.find((optionGroup) => optionGroup.id === groupId);
+
+    setSelectedOptionGroups((current) => {
+      if (group?.mode !== "multi") {
+        return { ...current, [groupId]: [optionName] };
+      }
+
+      const currentGroup = current[groupId] ?? [];
+
+      if (optionName === "Polos") {
+        return { ...current, [groupId]: ["Polos"] };
+      }
+
+      const withoutPolos = currentGroup.filter((name) => name !== "Polos");
+      const nextGroup = withoutPolos.includes(optionName)
+        ? withoutPolos.filter((name) => name !== optionName)
+        : [...withoutPolos, optionName];
+
+      return { ...current, [groupId]: nextGroup.length ? nextGroup : ["Polos"] };
+    });
   }
 
   function toggleChoice(choiceName: string) {
     if (selectedMenuItem.choiceMode === "single") {
       setSelectedChoices([choiceName]);
+      setManualChoicePrice("");
       return;
     }
 
@@ -232,6 +281,7 @@ export default function OrdersPage() {
     setItemNotes("");
     setCustomDescription("");
     setCustomPrice("");
+    setManualChoicePrice("");
   }
 
   function removeTicketItem(lineId: string) {
@@ -284,6 +334,7 @@ export default function OrdersPage() {
     setQuantity(1);
     setCustomDescription("");
     setCustomPrice("");
+    setManualChoicePrice("");
     setItemNotes("");
     setNotes("");
     setDiscountType("none");
@@ -432,7 +483,7 @@ export default function OrdersPage() {
                   <p className="text-sm font-bold">{group.label}</p>
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
                     {group.options.map((option) => {
-                      const isSelected = selectedOptionGroups[group.id] === option.name;
+                      const isSelected = selectedOptionGroups[group.id]?.includes(option.name) ?? false;
 
                       return (
                         <button
@@ -479,10 +530,30 @@ export default function OrdersPage() {
                           {choice.name}
                           {choice.price ? <span className="block text-xs opacity-80">{formatIDR(choice.price)}</span> : null}
                           {!choice.price && choice.priceDelta ? <span className="block text-xs opacity-80">+{formatIDR(choice.priceDelta)}</span> : null}
+                          {choice.priceHint ? <span className="block text-xs opacity-80">{choice.priceHint}</span> : null}
                         </button>
                       );
                     })}
                   </div>
+                </div>
+              ) : null}
+
+              {selectedManualChoice ? (
+                <div>
+                  <label className="text-sm font-bold" htmlFor="manualChoicePrice">
+                    {selectedManualChoice.name} price
+                  </label>
+                  <input
+                    id="manualChoicePrice"
+                    min={1}
+                    inputMode="numeric"
+                    type="number"
+                    value={manualChoicePrice}
+                    onChange={(event) => setManualChoicePrice(event.target.value)}
+                    placeholder="25000 - 30000"
+                    className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
+                  />
+                  {selectedManualChoice.priceHint ? <p className="mt-1 text-xs font-semibold text-muted">{selectedManualChoice.priceHint}</p> : null}
                 </div>
               ) : null}
             </>
