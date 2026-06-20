@@ -100,7 +100,7 @@ export const menuItems: MenuItemDefinition[] = [
   { id: "pisang-goreng-gula-aren", category: "Snacks", name: "Pisang Goreng Gula Aren", basePrice: 15000, choiceMode: "none" },
   { id: "tahu-tempe-goreng", category: "Snacks", name: "Tahu / Tempe Goreng", basePrice: 15000, choiceMode: "none" },
   { id: "roti-bakar-coklat-susu", category: "Snacks", name: "Roti Bakar Coklat Susu", basePrice: 15000, choiceMode: "none" },
-  { id: "telor-setengah-matang", category: "Snacks", name: "Telor Setengah Matang", basePrice: 12000, choiceMode: "none", helper: "1 porsi, 2 butir telur ayam kampung." },
+  { id: "telor-setengah-matang", category: "Snacks", name: "Telor Setengah Matang", basePrice: 10000, choiceMode: "none", helper: "1 porsi, 2 butir telur ayam kampung." },
   { id: "oase-tuak", category: "Beverages", name: "OASE Tuak", basePrice: 5000, choiceMode: "none" },
   {
     id: "bandrek",
@@ -124,7 +124,7 @@ export const menuItems: MenuItemDefinition[] = [
       { name: "Susu", priceDelta: 2000 }
     ]
   },
-  { id: "stmj", category: "Beverages", name: "STMJ (Susu Telur Madu Jahe)", basePrice: 20000, choiceMode: "none" },
+  { id: "stmj", category: "Beverages", name: "STMJ (Susu Telur Madu Jahe)", basePrice: 17000, choiceMode: "none" },
   { id: "teh-manis-panas", category: "Beverages", name: "Teh Manis Panas", basePrice: 5000, choiceMode: "none" },
   { id: "teh-manis-dingin", category: "Beverages", name: "Teh Manis Dingin", basePrice: 7000, choiceMode: "none" },
   { id: "teh-anti-masuk-angin", category: "Beverages", name: "Teh Anti Masuk Angin", basePrice: 9000, choiceMode: "none" },
@@ -171,7 +171,7 @@ export const menuItems: MenuItemDefinition[] = [
   {
     id: "paket-sabas",
     category: "Paket Nobar",
-    name: "Paket Sabas - OASE Siak Tolu Babi + Teh Anti Masuk Angin",
+    name: "Paket Sabas - Tanggo Tanggo Babi + Teh Anti Masuk Angin",
     basePrice: 42000,
     choiceMode: "none"
   },
@@ -183,10 +183,10 @@ export const menuItems: MenuItemDefinition[] = [
     choiceMode: "none"
   },
   {
-    id: "paket-tanggo-tanggo",
+    id: "paket-tambul",
     category: "Paket Nobar",
-    name: "Paket Tanggo Tanggo - Tanggo Tanggo Babi + 2 Gelas Tuak",
-    basePrice: 40000,
+    name: "Paket Tambul - Tambul (porsi sharing) + 2 Gelas Tuak",
+    basePrice: 45000,
     choiceMode: "none"
   }
 ];
