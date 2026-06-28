@@ -52,7 +52,7 @@ export const menuItems: MenuItemDefinition[] = [
     id: "indomie",
     category: "Food",
     name: "Indomie",
-    basePrice: 12000,
+    basePrice: 10000,
     choiceMode: "none",
     optionGroups: [
       {
@@ -127,6 +127,7 @@ export const menuItems: MenuItemDefinition[] = [
   { id: "stmj", category: "Beverages", name: "STMJ (Susu Telur Madu Jahe)", basePrice: 17000, choiceMode: "none" },
   { id: "teh-manis-panas", category: "Beverages", name: "Teh Manis Panas", basePrice: 5000, choiceMode: "none" },
   { id: "teh-manis-dingin", category: "Beverages", name: "Teh Manis Dingin", basePrice: 7000, choiceMode: "none" },
+  { id: "teh-susu", category: "Beverages", name: "Teh Susu", basePrice: 7000, choiceMode: "none" },
   { id: "teh-anti-masuk-angin", category: "Beverages", name: "Teh Anti Masuk Angin", basePrice: 9000, choiceMode: "none" },
   {
     id: "oase-latte",
@@ -154,7 +155,8 @@ export const menuItems: MenuItemDefinition[] = [
       { name: "Americano", price: 9000 },
       { name: "Cappuccino", price: 12000 },
       { name: "Mochaccino", price: 13000 },
-      { name: "Latte", price: 12000 }
+      { name: "Latte", price: 12000 },
+      { name: "Kopi Susu", price: 10000 }
     ]
   },
   { id: "choco-lava", category: "Beverages", name: "Choco Lava", basePrice: 17000, choiceMode: "none" },
