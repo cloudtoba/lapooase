@@ -17,9 +17,12 @@ function isToday(value: string) {
 }
 
 export default function ReportsPage() {
-  const { isReady, orders } = usePOS();
+  const { expenses, isReady, orders } = usePOS();
   const todayOrders = orders.filter((order) => isToday(order.createdAt));
+  const todayExpenses = expenses.filter((expense) => isToday(`${expense.expenseDate}T00:00:00`));
   const todaySales = todayOrders.reduce((sum, order) => sum + order.total, 0);
+  const todayExpenseTotal = todayExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const todayNetCash = todaySales - todayExpenseTotal;
   const countByDay = orders.reduce<Record<string, number>>((days, order) => {
     const key = dateKey(order.createdAt);
     days[key] = (days[key] ?? 0) + 1;
@@ -65,6 +68,8 @@ export default function ReportsPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard label="Total orders today" value={String(todayOrders.length)} />
             <StatCard label="Total sales today" value={formatIDR(todaySales)} />
+            <StatCard label="Expenses today" value={formatIDR(todayExpenseTotal)} />
+            <StatCard label="Net cash today" value={formatIDR(todayNetCash)} />
             <StatCard label="Best-selling item" value={bestSellingItem ? bestSellingItem[0] : "None"} />
             <StatCard label="Best-selling qty" value={bestSellingItem ? String(bestSellingItem[1]) : "0"} />
           </div>

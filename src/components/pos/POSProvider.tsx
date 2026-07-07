@@ -2,14 +2,25 @@
 
 // React context for the whole POS. It keeps state management simple and syncs changes to Supabase when configured.
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { addOrderRemote, getErrorMessage, loadInventoryRemote, loadOrdersRemote, updateOrderStatusRemote, updateStockRemote } from "@/lib/pos-storage";
-import type { InventoryItem, Order, OrderStatus } from "@/types/pos";
+import {
+  addExpenseRemote,
+  addOrderRemote,
+  getErrorMessage,
+  loadExpensesRemote,
+  loadInventoryRemote,
+  loadOrdersRemote,
+  updateOrderStatusRemote,
+  updateStockRemote
+} from "@/lib/pos-storage";
+import type { Expense, InventoryItem, Order, OrderStatus } from "@/types/pos";
 
 type POSContextValue = {
   orders: Order[];
   inventory: InventoryItem[];
+  expenses: Expense[];
   isReady: boolean;
   addOrder: (order: Order) => void;
+  addExpense: (expense: Expense) => void;
   updateOrderStatus: (id: string, status: OrderStatus) => void;
   updateStock: (id: string, stock: number) => void;
 };
@@ -19,13 +30,14 @@ const POSContext = createContext<POSContextValue | null>(null);
 export function POSProvider({ children }: { children: React.ReactNode }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadData() {
-      const [ordersResult, inventoryResult] = await Promise.allSettled([loadOrdersRemote(), loadInventoryRemote()]);
+      const [ordersResult, inventoryResult, expensesResult] = await Promise.allSettled([loadOrdersRemote(), loadInventoryRemote(), loadExpensesRemote()]);
 
       if (isMounted) {
         if (ordersResult.status === "fulfilled") {
@@ -38,6 +50,12 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
           setInventory(inventoryResult.value);
         } else {
           console.error(`Failed to load inventory: ${getErrorMessage(inventoryResult.reason)}`, inventoryResult.reason);
+        }
+
+        if (expensesResult.status === "fulfilled") {
+          setExpenses(expensesResult.value);
+        } else {
+          console.error(`Failed to load expenses: ${getErrorMessage(expensesResult.reason)}`, expensesResult.reason);
         }
 
         setIsReady(true);
@@ -55,11 +73,18 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
     () => ({
       orders,
       inventory,
+      expenses,
       isReady,
       addOrder: (order) => {
         setOrders((current) => [order, ...current]);
         void addOrderRemote(order).catch((error) => {
           console.error(`Failed to save order: ${getErrorMessage(error)}`, error);
+        });
+      },
+      addExpense: (expense) => {
+        setExpenses((current) => [expense, ...current]);
+        void addExpenseRemote(expense).catch((error) => {
+          console.error(`Failed to save expense: ${getErrorMessage(error)}`, error);
         });
       },
       updateOrderStatus: (id, status) => {
@@ -77,7 +102,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
         });
       }
     }),
-    [inventory, isReady, orders]
+    [expenses, inventory, isReady, orders]
   );
 
   return <POSContext.Provider value={value}>{children}</POSContext.Provider>;

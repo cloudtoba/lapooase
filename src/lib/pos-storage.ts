@@ -1,12 +1,13 @@
 "use client";
 
 // Browser persistence helpers. Supabase is the primary store when configured; localStorage remains the dev fallback.
-import type { InventoryItem, Order } from "@/types/pos";
-import { sampleInventory, sampleOrders } from "@/data/seed";
+import type { Expense, InventoryItem, Order } from "@/types/pos";
+import { sampleExpenses, sampleInventory, sampleOrders } from "@/data/seed";
 import { createSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
 const ORDERS_KEY = "lapo-oase-orders-v2";
 const INVENTORY_KEY = "lapo-oase-inventory-v3";
+const EXPENSES_KEY = "lapo-oase-expenses-v1";
 
 function readJson<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") {
@@ -49,6 +50,14 @@ export function saveInventoryLocal(items: InventoryItem[]) {
   writeJson(INVENTORY_KEY, items);
 }
 
+export function loadExpenses() {
+  return readJson<Expense[]>(EXPENSES_KEY, sampleExpenses);
+}
+
+export function saveExpensesLocal(expenses: Expense[]) {
+  writeJson(EXPENSES_KEY, expenses);
+}
+
 export function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
     return error.message;
@@ -70,6 +79,15 @@ export function getErrorMessage(error: unknown) {
   }
 
   return String(error);
+}
+
+function isMissingSupabaseRelation(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const record = error as Record<string, unknown>;
+  return record.code === "PGRST205" || String(record.message ?? "").includes("Could not find the table");
 }
 
 function toOrder(row: {
@@ -197,6 +215,11 @@ export async function updateOrderStatusRemote(id: string, status: Order["status"
   const supabase = createSupabaseBrowserClient();
   const { error } = await supabase.from("pos_orders").update({ status }).eq("id", id);
 
+  if (error && isMissingSupabaseRelation(error)) {
+    saveOrdersLocal(fallbackOrders);
+    return;
+  }
+
   if (error) {
     throw error;
   }
@@ -229,6 +252,84 @@ export async function updateStockRemote(id: string, stock: number, fallbackInven
 
   const supabase = createSupabaseBrowserClient();
   const { error } = await supabase.from("inventory_items").update({ stock }).eq("id", id);
+
+  if (error) {
+    throw error;
+  }
+}
+
+function toExpense(row: {
+  id: string;
+  created_at: string;
+  expense_date: string;
+  description: string;
+  category: Expense["category"];
+  amount: number;
+  payment_method: Expense["paymentMethod"];
+  vendor: string | null;
+  notes: string | null;
+}): Expense {
+  return {
+    id: row.id,
+    createdAt: row.created_at,
+    expenseDate: row.expense_date,
+    description: row.description,
+    category: row.category,
+    amount: Number(row.amount),
+    paymentMethod: row.payment_method,
+    vendor: row.vendor ?? undefined,
+    notes: row.notes ?? undefined
+  };
+}
+
+export async function loadExpensesRemote() {
+  if (!isSupabaseConfigured()) {
+    return loadExpenses();
+  }
+
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("pos_expenses")
+    .select("id, created_at, expense_date, description, category, amount, payment_method, vendor, notes")
+    .order("expense_date", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error && isMissingSupabaseRelation(error)) {
+    return loadExpenses();
+  }
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map(toExpense);
+}
+
+export async function addExpenseRemote(expense: Expense) {
+  if (!isSupabaseConfigured()) {
+    const nextExpenses = [expense, ...loadExpenses()];
+    saveExpensesLocal(nextExpenses);
+    return;
+  }
+
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase.from("pos_expenses").insert({
+    id: expense.id,
+    created_at: expense.createdAt,
+    expense_date: expense.expenseDate,
+    description: expense.description,
+    category: expense.category,
+    amount: expense.amount,
+    payment_method: expense.paymentMethod,
+    vendor: expense.vendor ?? null,
+    notes: expense.notes ?? null
+  });
+
+  if (error && isMissingSupabaseRelation(error)) {
+    const nextExpenses = [expense, ...loadExpenses()];
+    saveExpensesLocal(nextExpenses);
+    return;
+  }
 
   if (error) {
     throw error;

@@ -1,5 +1,5 @@
 // Sample Lapo Oase data used to seed localStorage on the first browser visit.
-import type { InventoryItem, Order } from "@/types/pos";
+import type { Expense, InventoryItem, Order } from "@/types/pos";
 
 export const sampleOrders: Order[] = [
   {
@@ -46,4 +46,25 @@ export const sampleInventory: InventoryItem[] = [
   { id: "inv-kopi", name: "Kopi", stock: 8, unit: "kg" },
   { id: "inv-susu", name: "Susu", stock: 24, unit: "cans" },
   { id: "inv-tuak", name: "Tuak", stock: 30, unit: "bottles" }
+];
+
+export const sampleExpenses: Expense[] = [
+  {
+    id: "expense-1001",
+    createdAt: new Date().toISOString(),
+    expenseDate: new Date().toISOString().slice(0, 10),
+    description: "Gas 10 tabung",
+    category: "Gas",
+    amount: 170000,
+    paymentMethod: "Cash"
+  },
+  {
+    id: "expense-1002",
+    createdAt: new Date().toISOString(),
+    expenseDate: new Date().toISOString().slice(0, 10),
+    description: "Susu UHT 2 kotak",
+    category: "Bahan Baku",
+    amount: 44000,
+    paymentMethod: "Cash"
+  }
 ];

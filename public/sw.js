@@ -1,6 +1,6 @@
 // Minimal app-shell service worker for installability and repeat visits.
-const CACHE_NAME = "lapo-oase-v3";
-const APP_SHELL = ["/", "/orders", "/kitchen", "/reports", "/inventory", "/manifest.webmanifest"];
+const CACHE_NAME = "lapo-oase-v4";
+const APP_SHELL = ["/", "/orders", "/kitchen", "/expenses", "/reports", "/inventory", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));

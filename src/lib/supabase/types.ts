@@ -204,6 +204,41 @@ export type Database = {
         };
         Relationships: [];
       };
+      pos_expenses: {
+        Row: {
+          id: string;
+          created_at: string;
+          expense_date: string;
+          description: string;
+          category: "Bahan Baku" | "Gas" | "Listrik" | "Gaji" | "Sewa" | "Peralatan" | "Maintenance" | "Lainnya";
+          amount: number;
+          payment_method: "Cash" | "QRIS" | "Transfer" | "Kartu";
+          vendor: string | null;
+          notes: string | null;
+        };
+        Insert: {
+          id: string;
+          created_at?: string;
+          expense_date: string;
+          description: string;
+          category: "Bahan Baku" | "Gas" | "Listrik" | "Gaji" | "Sewa" | "Peralatan" | "Maintenance" | "Lainnya";
+          amount: number;
+          payment_method?: "Cash" | "QRIS" | "Transfer" | "Kartu";
+          vendor?: string | null;
+          notes?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          expense_date?: string;
+          description?: string;
+          category?: "Bahan Baku" | "Gas" | "Listrik" | "Gaji" | "Sewa" | "Peralatan" | "Maintenance" | "Lainnya";
+          amount?: number;
+          payment_method?: "Cash" | "QRIS" | "Transfer" | "Kartu";
+          vendor?: string | null;
+          notes?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

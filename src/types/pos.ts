@@ -1,6 +1,8 @@
 // Shared POS data contracts used by local storage, forms, reports, and inventory screens.
 export type OrderStatus = "new" | "preparing" | "done";
 export type DiscountType = "none" | "opening_10" | "google_review_20" | "custom";
+export type ExpenseCategory = "Bahan Baku" | "Gas" | "Listrik" | "Gaji" | "Sewa" | "Peralatan" | "Maintenance" | "Lainnya";
+export type PaymentMethod = "Cash" | "QRIS" | "Transfer" | "Kartu";
 
 export type OrderItem = {
   name: string;
@@ -34,4 +36,16 @@ export type InventoryItem = {
   name: string;
   stock: number;
   unit: string;
+};
+
+export type Expense = {
+  id: string;
+  createdAt: string;
+  expenseDate: string;
+  description: string;
+  category: ExpenseCategory;
+  amount: number;
+  paymentMethod: PaymentMethod;
+  vendor?: string;
+  notes?: string;
 };

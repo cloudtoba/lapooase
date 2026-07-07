@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { BarChart3, ClipboardList, Home, Package, ReceiptText, Utensils } from "lucide-react";
+import { BarChart3, ClipboardList, Home, Package, ReceiptText, Utensils, WalletCards } from "lucide-react";
 
 const links = [
   { href: "/", label: "Home", icon: Home },
   { href: "/orders", label: "Orders", icon: ReceiptText },
   { href: "/kitchen", label: "Kitchen", icon: ClipboardList },
+  { href: "/expenses", label: "Expenses", icon: WalletCards },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/inventory", label: "Inventory", icon: Package }
 ];
@@ -29,7 +30,7 @@ export function Navbar() {
           </span>
         </Link>
 
-        <ul className="grid grid-cols-5 gap-1 text-xs font-semibold text-muted sm:text-sm md:flex md:items-center md:gap-2">
+        <ul className="grid grid-cols-3 gap-1 text-xs font-semibold text-muted sm:grid-cols-6 sm:text-sm md:flex md:items-center md:gap-2">
           {links.map((link) => (
             <li key={link.href}>
               <Link

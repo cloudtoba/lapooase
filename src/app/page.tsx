@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BarChart3, ClipboardList, Package, ReceiptText } from "lucide-react";
+import { BarChart3, ClipboardList, Package, ReceiptText, WalletCards } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 const destinations = [
   { href: "/orders", label: "Orders", description: "Create Batak food orders and review saved tickets.", icon: ReceiptText },
   { href: "/kitchen", label: "Kitchen", description: "Move tickets from new to preparing to done.", icon: ClipboardList },
+  { href: "/expenses", label: "Expenses", description: "Record daily cash-out items and supplier purchases.", icon: WalletCards },
   { href: "/reports", label: "Reports", description: "Check today sales, counts by day, and best sellers.", icon: BarChart3 },
   { href: "/inventory", label: "Inventory", description: "Update stock quantities for Batak kitchen supplies.", icon: Package }
 ];
@@ -30,7 +31,7 @@ export default function HomePage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {destinations.map((destination) => (
           <Link key={destination.href} href={destination.href} className="focus-ring app-panel p-5 hover:-translate-y-0.5 hover:shadow-lg">
             <destination.icon className="h-8 w-8 text-tomato" aria-hidden="true" />
