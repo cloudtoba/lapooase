@@ -87,6 +87,7 @@ export const menuItems: MenuItemDefinition[] = [
   { id: "tahu-tempe-goreng", category: "Snacks", name: "Tahu Tempe Goreng", basePrice: 15000, choiceMode: "none" },
   { id: "roti-bakar-coklat-susu", category: "Snacks", name: "Roti Bakar Coklat Susu", basePrice: 15000, choiceMode: "none" },
   { id: "roti-bakar-coklat-keju", category: "Snacks", name: "Roti Bakar Coklat Keju", basePrice: 17000, choiceMode: "none" },
+  { id: "nugget", category: "Snacks", name: "Nugget", basePrice: 15000, choiceMode: "none" },
   { id: "telor-setengah-matang", category: "Snacks", name: "Telor Setengah Matang", basePrice: 10000, choiceMode: "none", helper: "1 porsi, 2 butir telur ayam kampung." },
   { id: "bandrek-susu", category: "Beverages", name: "Bandrek Susu", basePrice: 12000, choiceMode: "none" },
   {
