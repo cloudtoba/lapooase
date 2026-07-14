@@ -107,6 +107,7 @@ export const menuItems: MenuItemDefinition[] = [
       }
     ]
   },
+  { id: "teh-susu", category: "Beverages", name: "Teh Susu", basePrice: 8000, choiceMode: "none" },
   { id: "stmj", category: "Beverages", name: "STMJ (Susu Telur Madu Jahe)", basePrice: 17000, choiceMode: "none" },
   { id: "lemon-tea", category: "Beverages", name: "Lemon Tea", basePrice: 10000, choiceMode: "none" },
   { id: "teh-manis-panas", category: "Beverages", name: "Teh Manis Panas", basePrice: 5000, choiceMode: "none" },
@@ -137,7 +138,8 @@ export const menuItems: MenuItemDefinition[] = [
       { name: "Americano", price: 12000 },
       { name: "Capuccino", price: 15000 },
       { name: "Moccacino", price: 15000 },
-      { name: "Latte", price: 15000 }
+      { name: "Latte", price: 15000 },
+      { name: "Kopi Susu", price: 10000 }
     ]
   },
   { id: "choco-lava", category: "Beverages", name: "Choco Lava", basePrice: 17000, choiceMode: "none" },
