@@ -1,7 +1,7 @@
 "use client";
 
 // Orders screen: staff build one customer ticket from multiple menu items, then save it to the POS store.
-import { FormEvent, useMemo, useState } from "react";
+import { Fragment, FormEvent, useMemo, useState } from "react";
 import { Plus, Save, Trash2, X } from "lucide-react";
 import { OrderList } from "@/components/pos/OrderList";
 import { PageHeader } from "@/components/pos/PageHeader";
@@ -336,6 +336,162 @@ export default function OrdersPage() {
     setTicketItems([]);
   }
 
+  function renderQuickAddControls(className = "") {
+    return (
+      <div className={`rounded-md border border-ink/10 bg-fog p-3 ${className}`}>
+        {!isCustomCategory && selectedMenuItem.temperatureOptions ? (
+          <div>
+            <p className="text-sm font-bold">Temperature</p>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {selectedMenuItem.temperatureOptions.map((option) => (
+                <button
+                  key={option.name}
+                  type="button"
+                  onClick={() => setTemperature(option.name)}
+                  className={`focus-ring rounded-md border px-3 py-3 text-sm font-bold ${
+                    temperature === option.name ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
+                  }`}
+                >
+                  {option.name}
+                  {option.priceDelta ? ` +${formatIDR(option.priceDelta)}` : ""}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {!isCustomCategory
+          ? selectedMenuItem.optionGroups?.map((group) => (
+              <div key={group.id} className="mt-3 first:mt-0">
+                <p className="text-sm font-bold">{group.label}</p>
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {group.options.map((option) => {
+                    const isSelected = selectedOptionGroups[group.id]?.includes(option.name) ?? false;
+
+                    return (
+                      <button
+                        key={option.name}
+                        type="button"
+                        onClick={() => selectOptionGroup(group.id, option.name)}
+                        className={`focus-ring min-h-12 rounded-md border px-3 py-2 text-left text-sm font-bold ${
+                          isSelected ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
+                        }`}
+                      >
+                        {option.name}
+                        {option.price ? <span className="block text-xs opacity-80">{formatIDR(option.price)}</span> : null}
+                        {option.priceDelta ? <span className="block text-xs opacity-80">+{formatIDR(option.priceDelta)}</span> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          : null}
+
+        {!isCustomCategory && selectedMenuItem.choices?.length ? (
+          <div className="mt-3 first:mt-0">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-bold">{selectedMenuItem.choiceMode === "multi" ? "Choices" : "Choice"}</p>
+              {selectedMenuItem.choiceMode === "multi" ? (
+                <button type="button" onClick={applyAllChoices} className="focus-ring rounded-md px-2 py-1 text-xs font-black text-ocean">
+                  Apply all
+                </button>
+              ) : null}
+            </div>
+            {selectedMenuItem.helper ? <p className="mt-1 text-xs font-semibold text-muted">{selectedMenuItem.helper}</p> : null}
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              {selectedMenuItem.choices.map((choice) => {
+                const isSelected = selectedChoices.includes(choice.name);
+                return (
+                  <button
+                    key={choice.name}
+                    type="button"
+                    onClick={() => toggleChoice(choice.name)}
+                    className={`focus-ring min-h-12 rounded-md border px-3 py-2 text-left text-sm font-bold ${
+                      isSelected ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
+                    }`}
+                  >
+                    {choice.name}
+                    {choice.price ? <span className="block text-xs opacity-80">{formatIDR(choice.price)}</span> : null}
+                    {!choice.price && choice.priceDelta ? <span className="block text-xs opacity-80">+{formatIDR(choice.priceDelta)}</span> : null}
+                    {choice.priceHint ? <span className="block text-xs opacity-80">{choice.priceHint}</span> : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        {!isCustomCategory && selectedManualChoice ? (
+          <div className="mt-3">
+            <label className="text-sm font-bold" htmlFor="manualChoicePrice">
+              {selectedManualChoice.name} price
+            </label>
+            <input
+              id="manualChoicePrice"
+              min={1}
+              inputMode="numeric"
+              type="number"
+              value={manualChoicePrice}
+              onChange={(event) => setManualChoicePrice(event.target.value)}
+              placeholder="25000 - 30000"
+              className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
+            />
+            {selectedManualChoice.priceHint ? <p className="mt-1 text-xs font-semibold text-muted">{selectedManualChoice.priceHint}</p> : null}
+          </div>
+        ) : null}
+
+        <div className="mt-3 grid gap-3 sm:grid-cols-[auto_1fr] sm:items-end">
+          <div>
+            <p className="text-sm font-bold">Quantity</p>
+            <div className="mt-2 inline-flex h-12 items-center overflow-hidden rounded-md border border-ink/10 bg-white">
+              <button
+                type="button"
+                onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+                className="focus-ring h-12 w-12 text-lg font-black hover:bg-fog"
+                aria-label="Decrease quantity"
+              >
+                -
+              </button>
+              <span className="w-14 text-center text-lg font-black">{quantity}</span>
+              <button
+                type="button"
+                onClick={() => setQuantity((current) => current + 1)}
+                className="focus-ring h-12 w-12 text-lg font-black hover:bg-fog"
+                aria-label="Increase quantity"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-bold" htmlFor="itemNotes">
+              Notes
+            </label>
+            <input
+              id="itemNotes"
+              value={itemNotes}
+              onChange={(event) => setItemNotes(event.target.value)}
+              placeholder="Tanpa es, pedas, kuah sedikit"
+              className="focus-ring mt-2 h-12 w-full rounded-md border border-ink/10 bg-white px-3"
+            />
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={addItemsToTicket}
+          disabled={previewItems.length === 0 || quantity < 1}
+          className="focus-ring mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-ocean px-4 py-3 text-sm font-black text-white hover:bg-ink disabled:cursor-not-allowed disabled:bg-muted"
+        >
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          Add item {previewItems.length ? `- ${formatIDR(previewTotal)}` : ""}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <section className="section">
       <PageHeader
@@ -434,181 +590,30 @@ export default function OrdersPage() {
                 </p>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2" role="group" aria-labelledby="menu-item-label">
                   {filteredItems.map((item) => {
+                    const isSelected = menuItemId === item.id;
                     const priceLabel = item.basePrice > 0 ? formatIDR(item.basePrice) : item.choices?.find((choice) => choice.manualPrice)?.priceHint;
 
                     return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => selectMenuItem(item.id)}
-                        className={`focus-ring min-h-14 rounded-md border px-3 py-2 text-left text-sm font-black ${
-                          menuItemId === item.id ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
-                        }`}
-                      >
-                        {item.name}
-                        {priceLabel ? <span className="block text-xs opacity-80">{priceLabel}</span> : null}
-                      </button>
+                      <Fragment key={item.id}>
+                        <button
+                          type="button"
+                          onClick={() => selectMenuItem(item.id)}
+                          className={`focus-ring min-h-14 rounded-md border px-3 py-2 text-left text-sm font-black ${
+                            isSelected ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
+                          }`}
+                        >
+                          {item.name}
+                          {priceLabel ? <span className="block text-xs opacity-80">{priceLabel}</span> : null}
+                        </button>
+                        {isSelected ? renderQuickAddControls("sm:col-span-2") : null}
+                      </Fragment>
                     );
                   })}
                 </div>
               </div>
-
-              {selectedMenuItem.temperatureOptions ? (
-                <div>
-                  <p className="text-sm font-bold">Temperature</p>
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    {selectedMenuItem.temperatureOptions.map((option) => (
-                      <button
-                        key={option.name}
-                        type="button"
-                        onClick={() => setTemperature(option.name)}
-                        className={`focus-ring rounded-md border px-3 py-3 text-sm font-bold ${
-                          temperature === option.name ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
-                        }`}
-                      >
-                        {option.name}
-                        {option.priceDelta ? ` +${formatIDR(option.priceDelta)}` : ""}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              {selectedMenuItem.optionGroups?.map((group) => (
-                <div key={group.id}>
-                  <p className="text-sm font-bold">{group.label}</p>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    {group.options.map((option) => {
-                      const isSelected = selectedOptionGroups[group.id]?.includes(option.name) ?? false;
-
-                      return (
-                        <button
-                          key={option.name}
-                          type="button"
-                          onClick={() => selectOptionGroup(group.id, option.name)}
-                          className={`focus-ring min-h-12 rounded-md border px-3 py-2 text-left text-sm font-bold ${
-                            isSelected ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
-                          }`}
-                        >
-                          {option.name}
-                          {option.price ? <span className="block text-xs opacity-80">{formatIDR(option.price)}</span> : null}
-                          {option.priceDelta ? <span className="block text-xs opacity-80">+{formatIDR(option.priceDelta)}</span> : null}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-
-              {selectedMenuItem.choices?.length ? (
-                <div>
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-bold">{selectedMenuItem.choiceMode === "multi" ? "Choices" : "Choice"}</p>
-                    {selectedMenuItem.choiceMode === "multi" ? (
-                      <button type="button" onClick={applyAllChoices} className="focus-ring rounded-md px-2 py-1 text-xs font-black text-ocean">
-                        Apply all
-                      </button>
-                    ) : null}
-                  </div>
-                  {selectedMenuItem.helper ? <p className="mt-1 text-xs font-semibold text-muted">{selectedMenuItem.helper}</p> : null}
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    {selectedMenuItem.choices.map((choice) => {
-                      const isSelected = selectedChoices.includes(choice.name);
-                      return (
-                        <button
-                          key={choice.name}
-                          type="button"
-                          onClick={() => toggleChoice(choice.name)}
-                          className={`focus-ring min-h-12 rounded-md border px-3 py-2 text-left text-sm font-bold ${
-                            isSelected ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
-                          }`}
-                        >
-                          {choice.name}
-                          {choice.price ? <span className="block text-xs opacity-80">{formatIDR(choice.price)}</span> : null}
-                          {!choice.price && choice.priceDelta ? <span className="block text-xs opacity-80">+{formatIDR(choice.priceDelta)}</span> : null}
-                          {choice.priceHint ? <span className="block text-xs opacity-80">{choice.priceHint}</span> : null}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-
-              {selectedManualChoice ? (
-                <div>
-                  <label className="text-sm font-bold" htmlFor="manualChoicePrice">
-                    {selectedManualChoice.name} price
-                  </label>
-                  <input
-                    id="manualChoicePrice"
-                    min={1}
-                    inputMode="numeric"
-                    type="number"
-                    value={manualChoicePrice}
-                    onChange={(event) => setManualChoicePrice(event.target.value)}
-                    placeholder="25000 - 30000"
-                    className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
-                  />
-                  {selectedManualChoice.priceHint ? <p className="mt-1 text-xs font-semibold text-muted">{selectedManualChoice.priceHint}</p> : null}
-                </div>
-              ) : null}
             </>
           )}
-
-          <div>
-            <label className="text-sm font-bold" htmlFor="quantity">
-              Quantity
-            </label>
-            <input
-              id="quantity"
-              min={1}
-              type="number"
-              value={quantity}
-              onChange={(event) => setQuantity(Number(event.target.value))}
-              className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-bold" htmlFor="itemNotes">
-              Item notes
-            </label>
-            <input
-              id="itemNotes"
-              value={itemNotes}
-              onChange={(event) => setItemNotes(event.target.value)}
-              placeholder="Example: tanpa es, pedas, kuah sedikit"
-              className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
-            />
-          </div>
-
-          <div className="rounded-md bg-fog p-3">
-            <p className="text-xs font-black uppercase text-muted">Item preview</p>
-            <div className="mt-2 space-y-1">
-              {previewItems.length ? (
-                previewItems.map((item) => (
-                  <p key={item.name} className="text-sm font-bold">
-                    {item.qty} x {item.name} <span className="text-muted">@ {formatIDR(item.price)}</span>
-                  </p>
-                ))
-              ) : (
-                <p className="text-sm font-semibold text-muted">
-                  {isCustomCategory ? "Add a custom order description and numeric price." : "Pilih menu dulu."}
-                </p>
-              )}
-            </div>
-            <p className="mt-3 text-xl font-black">{formatIDR(previewTotal)}</p>
-          </div>
-
-          <button
-            type="button"
-            onClick={addItemsToTicket}
-            disabled={previewItems.length === 0 || quantity < 1}
-            className="focus-ring inline-flex w-full items-center justify-center gap-2 rounded-md bg-ocean px-4 py-3 text-sm font-black text-white hover:bg-ink disabled:cursor-not-allowed disabled:bg-muted"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Add item to ticket
-          </button>
+          {isCustomCategory ? renderQuickAddControls() : null}
         </div>
 
         <aside className="app-panel flex flex-col p-5">
