@@ -151,6 +151,8 @@ function getMenuIcon(category: MenuCategory) {
   return Soup;
 }
 
+const tableNumbers = Array.from({ length: 16 }, (_, index) => String(index + 1));
+
 function applyDiscount(items: TicketItem[], discountRate: number): TicketItem[] {
   return items.map((item) => {
     const grossLineTotal = item.qty * item.price;
@@ -540,16 +542,23 @@ export default function OrdersPage() {
           </div>
 
           <div>
-            <label className="text-sm font-bold" htmlFor="orderNumber">
+            <p className="text-sm font-bold" id="table-number-label">
               Nomor Meja
-            </label>
-            <input
-              id="orderNumber"
-              value={orderNumber}
-              onChange={(event) => setOrderNumber(event.target.value)}
-              placeholder={suggestedOrderNumber}
-              className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
-            />
+            </p>
+            <div className="mt-2 grid grid-cols-4 gap-1.5" role="group" aria-labelledby="table-number-label">
+              {tableNumbers.map((tableNumber) => (
+                <button
+                  key={tableNumber}
+                  type="button"
+                  onClick={() => setOrderNumber(tableNumber)}
+                  className={`focus-ring h-9 rounded-md border text-sm font-black ${
+                    orderNumber === tableNumber ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
+                  }`}
+                >
+                  {tableNumber}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="border-t border-ink/10 pt-4">
