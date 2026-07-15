@@ -1,7 +1,7 @@
 "use client";
 
 // Orders screen: staff build one customer ticket from multiple menu items, then save it to the POS store.
-import { Fragment, FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { Coffee, Cookie, Plus, Save, Soup, Trash2, X } from "lucide-react";
 import { OrderList } from "@/components/pos/OrderList";
 import { PageHeader } from "@/components/pos/PageHeader";
@@ -173,11 +173,11 @@ export default function OrdersPage() {
   const [orderNumber, setOrderNumber] = useState("");
   const [category, setCategory] = useState<MenuCategory>("Makanan");
   const filteredItems = useMemo(() => menuItems.filter((item) => item.category === category), [category]);
-  const [menuItemId, setMenuItemId] = useState(filteredItems[0]?.id ?? menuItems[0].id);
-  const selectedMenuItem = menuItems.find((item) => item.id === menuItemId) ?? menuItems[0];
-  const [selectedChoices, setSelectedChoices] = useState<string[]>(getDefaultChoices(selectedMenuItem));
-  const [selectedOptionGroups, setSelectedOptionGroups] = useState<Record<string, string[]>>(getDefaultOptionGroups(selectedMenuItem));
-  const [temperature, setTemperature] = useState(getDefaultTemperature(selectedMenuItem));
+  const [menuItemId, setMenuItemId] = useState("");
+  const selectedMenuItem = menuItems.find((item) => item.id === menuItemId);
+  const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
+  const [selectedOptionGroups, setSelectedOptionGroups] = useState<Record<string, string[]>>({});
+  const [temperature, setTemperature] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [customDescription, setCustomDescription] = useState("");
   const [customPrice, setCustomPrice] = useState("");
@@ -186,10 +186,12 @@ export default function OrdersPage() {
   const [notes, setNotes] = useState("");
   const [ticketItems, setTicketItems] = useState<TicketItem[]>([]);
   const isCustomCategory = category === "Custom";
-  const selectedManualChoice = selectedMenuItem.choices?.find((choice) => selectedChoices.includes(choice.name) && choice.manualPrice);
+  const selectedManualChoice = selectedMenuItem?.choices?.find((choice) => selectedChoices.includes(choice.name) && choice.manualPrice);
   const previewItems = isCustomCategory
     ? buildCustomOrderItems(customDescription, customPrice, Math.max(quantity, 1))
-    : buildOrderItems(selectedMenuItem, selectedChoices, selectedOptionGroups, manualChoicePrice, temperature, Math.max(quantity, 1));
+    : selectedMenuItem
+      ? buildOrderItems(selectedMenuItem, selectedChoices, selectedOptionGroups, manualChoicePrice, temperature, Math.max(quantity, 1))
+      : [];
   const previewTotal = previewItems.reduce((sum, item) => sum + item.qty * item.price, 0);
   const discountConfig = getDiscountConfig("none", "");
   const ticketSubtotal = ticketItems.reduce((sum, item) => sum + item.qty * item.price, 0);
@@ -198,15 +200,16 @@ export default function OrdersPage() {
   const ticketTotal = discountedTicketItems.reduce((sum, item) => sum + (item.netLineTotal ?? item.qty * item.price), 0);
 
   function selectCategory(nextCategory: MenuCategory) {
-    const nextItem = menuItems.find((item) => item.category === nextCategory) ?? menuItems[0];
     setCategory(nextCategory);
     setCustomDescription("");
     setCustomPrice("");
     setManualChoicePrice("");
-    setMenuItemId(nextItem.id);
-    setSelectedChoices(getDefaultChoices(nextItem));
-    setSelectedOptionGroups(getDefaultOptionGroups(nextItem));
-    setTemperature(getDefaultTemperature(nextItem));
+    setMenuItemId("");
+    setSelectedChoices([]);
+    setSelectedOptionGroups({});
+    setTemperature("");
+    setItemNotes("");
+    setQuantity(1);
   }
 
   function selectMenuItem(nextId: string) {
@@ -219,7 +222,7 @@ export default function OrdersPage() {
   }
 
   function selectOptionGroup(groupId: string, optionName: string) {
-    const group = selectedMenuItem.optionGroups?.find((optionGroup) => optionGroup.id === groupId);
+    const group = selectedMenuItem?.optionGroups?.find((optionGroup) => optionGroup.id === groupId);
 
     setSelectedOptionGroups((current) => {
       if (group?.mode !== "multi") {
@@ -242,7 +245,7 @@ export default function OrdersPage() {
   }
 
   function toggleChoice(choiceName: string) {
-    if (selectedMenuItem.choiceMode === "single") {
+    if (selectedMenuItem?.choiceMode === "single") {
       setSelectedChoices([choiceName]);
       setManualChoicePrice("");
       return;
@@ -254,7 +257,7 @@ export default function OrdersPage() {
   }
 
   function applyAllChoices() {
-    setSelectedChoices(selectedMenuItem.choices?.map((choice) => choice.name) ?? []);
+    setSelectedChoices(selectedMenuItem?.choices?.map((choice) => choice.name) ?? []);
   }
 
   function addItemsToTicket() {
@@ -293,6 +296,10 @@ export default function OrdersPage() {
     setCustomDescription("");
     setCustomPrice("");
     setManualChoicePrice("");
+    setMenuItemId("");
+    setSelectedChoices([]);
+    setSelectedOptionGroups({});
+    setTemperature("");
   }
 
   function removeTicketItem(lineId: string) {
@@ -338,7 +345,10 @@ export default function OrdersPage() {
 
     setOrderNumber("");
     setCategory("Makanan");
-    selectMenuItem(menuItems[0].id);
+    setMenuItemId("");
+    setSelectedChoices([]);
+    setSelectedOptionGroups({});
+    setTemperature("");
     setQuantity(1);
     setCustomDescription("");
     setCustomPrice("");
@@ -349,9 +359,13 @@ export default function OrdersPage() {
   }
 
   function renderQuickAddControls(className = "") {
+    if (!isCustomCategory && !selectedMenuItem) {
+      return null;
+    }
+
     return (
       <div className={`rounded-md border border-ink/10 bg-fog p-3 ${className}`}>
-        {!isCustomCategory && selectedMenuItem.temperatureOptions ? (
+        {!isCustomCategory && selectedMenuItem?.temperatureOptions ? (
           <div>
             <p className="text-sm font-bold">Temperature</p>
             <div className="mt-2 grid grid-cols-2 gap-2">
@@ -373,7 +387,7 @@ export default function OrdersPage() {
         ) : null}
 
         {!isCustomCategory
-          ? selectedMenuItem.optionGroups?.map((group) => (
+          ? selectedMenuItem?.optionGroups?.map((group) => (
               <div key={group.id} className="mt-3 first:mt-0">
                 <p className="text-sm font-bold">{group.label}</p>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -400,7 +414,7 @@ export default function OrdersPage() {
             ))
           : null}
 
-        {!isCustomCategory && selectedMenuItem.choices?.length ? (
+        {!isCustomCategory && selectedMenuItem?.choices?.length ? (
           <div className="mt-3 first:mt-0">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-bold">{selectedMenuItem.choiceMode === "multi" ? "Choices" : "Choice"}</p>
@@ -519,7 +533,7 @@ export default function OrdersPage() {
       ) : null}
 
       <form onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_430px]">
-        <div className="app-panel space-y-4 p-5">
+        <div className="app-panel relative space-y-4 p-5">
           <div className="border-b border-ink/10 pb-4">
             <h2 className="text-xl font-black">Customer ticket</h2>
             <p className="mt-1 text-sm font-semibold text-muted">Pilih nomor meja, lalu klik menu yang dipesan.</p>
@@ -606,19 +620,17 @@ export default function OrdersPage() {
                     const MenuIcon = getMenuIcon(item.category);
 
                     return (
-                      <Fragment key={item.id}>
-                        <button
-                          type="button"
-                          onClick={() => selectMenuItem(item.id)}
-                          className={`focus-ring flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-md border px-2 py-3 text-center text-sm font-black leading-tight ${
-                            isSelected ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
-                          }`}
-                        >
-                          <MenuIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                          {item.name}
-                        </button>
-                        {isSelected ? renderQuickAddControls("col-span-3") : null}
-                      </Fragment>
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => selectMenuItem(item.id)}
+                        className={`focus-ring flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-md border px-2 py-3 text-center text-sm font-black leading-tight ${
+                          isSelected ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
+                        }`}
+                      >
+                        <MenuIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                        {item.name}
+                      </button>
                     );
                   })}
                 </div>
@@ -626,6 +638,25 @@ export default function OrdersPage() {
             </>
           )}
           {isCustomCategory ? renderQuickAddControls() : null}
+          {!isCustomCategory && selectedMenuItem ? (
+            <div className="fixed inset-x-3 bottom-3 z-50 mx-auto max-w-lg rounded-lg bg-paper/95 p-2 shadow-2xl ring-1 ring-ink/10 backdrop-blur md:absolute md:inset-x-5 md:bottom-5">
+              <div className="mb-2 flex items-center justify-between gap-3 px-1">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-muted">Selected</p>
+                  <p className="text-base font-black">{selectedMenuItem.name}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMenuItemId("")}
+                  className="focus-ring rounded-md p-2 text-muted hover:bg-fog hover:text-tomato"
+                  aria-label="Close quick add"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+              {renderQuickAddControls()}
+            </div>
+          ) : null}
         </div>
 
         <aside className="app-panel flex flex-col p-5">
