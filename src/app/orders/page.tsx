@@ -2,7 +2,7 @@
 
 // Orders screen: staff build one customer ticket from multiple menu items, then save it to the POS store.
 import { Fragment, FormEvent, useMemo, useState } from "react";
-import { Plus, Save, Trash2, X } from "lucide-react";
+import { Coffee, Cookie, Plus, Save, Soup, Trash2, X } from "lucide-react";
 import { OrderList } from "@/components/pos/OrderList";
 import { PageHeader } from "@/components/pos/PageHeader";
 import { usePOS } from "@/components/pos/POSProvider";
@@ -137,6 +137,18 @@ function getDiscountConfig(type: DiscountType, customRate: string) {
   }
 
   return { label: "No discount", rate: 0 };
+}
+
+function getMenuIcon(category: MenuCategory) {
+  if (category === "Minuman") {
+    return Coffee;
+  }
+
+  if (category === "Snacks") {
+    return Cookie;
+  }
+
+  return Soup;
 }
 
 function applyDiscount(items: TicketItem[], discountRate: number): TicketItem[] {
@@ -588,24 +600,24 @@ export default function OrdersPage() {
                 <p className="text-sm font-bold" id="menu-item-label">
                   Menu
                 </p>
-                <div className="mt-2 grid gap-2 sm:grid-cols-2" role="group" aria-labelledby="menu-item-label">
+                <div className="mt-2 grid grid-cols-3 gap-2" role="group" aria-labelledby="menu-item-label">
                   {filteredItems.map((item) => {
                     const isSelected = menuItemId === item.id;
-                    const priceLabel = item.basePrice > 0 ? formatIDR(item.basePrice) : item.choices?.find((choice) => choice.manualPrice)?.priceHint;
+                    const MenuIcon = getMenuIcon(item.category);
 
                     return (
                       <Fragment key={item.id}>
                         <button
                           type="button"
                           onClick={() => selectMenuItem(item.id)}
-                          className={`focus-ring min-h-14 rounded-md border px-3 py-2 text-left text-sm font-black ${
+                          className={`focus-ring flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-md border px-2 py-3 text-center text-sm font-black leading-tight ${
                             isSelected ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
                           }`}
                         >
+                          <MenuIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
                           {item.name}
-                          {priceLabel ? <span className="block text-xs opacity-80">{priceLabel}</span> : null}
                         </button>
-                        {isSelected ? renderQuickAddControls("sm:col-span-2") : null}
+                        {isSelected ? renderQuickAddControls("col-span-3") : null}
                       </Fragment>
                     );
                   })}
