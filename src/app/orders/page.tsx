@@ -157,8 +157,7 @@ export default function OrdersPage() {
   const { addOrder, isReady, orders } = usePOS();
   const suggestedOrderNumber = useMemo(() => nextOrderNumber(orders), [orders]);
   const [orderNumber, setOrderNumber] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [category, setCategory] = useState<MenuCategory>("Food");
+  const [category, setCategory] = useState<MenuCategory>("Makanan");
   const filteredItems = useMemo(() => menuItems.filter((item) => item.category === category), [category]);
   const [menuItemId, setMenuItemId] = useState(filteredItems[0]?.id ?? menuItems[0].id);
   const selectedMenuItem = menuItems.find((item) => item.id === menuItemId) ?? menuItems[0];
@@ -171,8 +170,6 @@ export default function OrdersPage() {
   const [manualChoicePrice, setManualChoicePrice] = useState("");
   const [itemNotes, setItemNotes] = useState("");
   const [notes, setNotes] = useState("");
-  const [discountType, setDiscountType] = useState<DiscountType>("none");
-  const [customDiscountRate, setCustomDiscountRate] = useState("");
   const [ticketItems, setTicketItems] = useState<TicketItem[]>([]);
   const isCustomCategory = category === "Custom";
   const selectedManualChoice = selectedMenuItem.choices?.find((choice) => selectedChoices.includes(choice.name) && choice.manualPrice);
@@ -180,7 +177,7 @@ export default function OrdersPage() {
     ? buildCustomOrderItems(customDescription, customPrice, Math.max(quantity, 1))
     : buildOrderItems(selectedMenuItem, selectedChoices, selectedOptionGroups, manualChoicePrice, temperature, Math.max(quantity, 1));
   const previewTotal = previewItems.reduce((sum, item) => sum + item.qty * item.price, 0);
-  const discountConfig = getDiscountConfig(discountType, customDiscountRate);
+  const discountConfig = getDiscountConfig("none", "");
   const ticketSubtotal = ticketItems.reduce((sum, item) => sum + item.qty * item.price, 0);
   const discountedTicketItems = applyDiscount(ticketItems, discountConfig.rate);
   const ticketDiscountAmount = discountedTicketItems.reduce((sum, item) => sum + (item.discountAmount ?? 0), 0);
@@ -300,8 +297,6 @@ export default function OrdersPage() {
   function clearTicket() {
     setTicketItems([]);
     setNotes("");
-    setDiscountType("none");
-    setCustomDiscountRate("");
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -315,12 +310,12 @@ export default function OrdersPage() {
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       orderNumber: orderNumber.trim() || suggestedOrderNumber,
-      customerName: customerName.trim() || undefined,
+      customerName: undefined,
       items: discountedTicketItems.map(toOrderItem),
       notes: notes.trim() || undefined,
       status: "new",
       subtotal: ticketSubtotal,
-      discountType,
+      discountType: "none",
       discountLabel: discountConfig.label,
       discountRate: discountConfig.rate,
       discountAmount: ticketDiscountAmount,
@@ -328,8 +323,7 @@ export default function OrdersPage() {
     });
 
     setOrderNumber("");
-    setCustomerName("");
-    setCategory("Food");
+    setCategory("Makanan");
     selectMenuItem(menuItems[0].id);
     setQuantity(1);
     setCustomDescription("");
@@ -337,8 +331,6 @@ export default function OrdersPage() {
     setManualChoicePrice("");
     setItemNotes("");
     setNotes("");
-    setDiscountType("none");
-    setCustomDiscountRate("");
     setTicketItems([]);
   }
 
@@ -354,12 +346,12 @@ export default function OrdersPage() {
         <div className="app-panel space-y-4 p-5">
           <div className="border-b border-ink/10 pb-4">
             <h2 className="text-xl font-black">Customer ticket</h2>
-            <p className="mt-1 text-sm font-semibold text-muted">Fill customer info once, then add food, drinks, and snacks into the same order.</p>
+            <p className="mt-1 text-sm font-semibold text-muted">Pilih nomor meja, lalu klik menu yang dipesan.</p>
           </div>
 
           <div>
             <label className="text-sm font-bold" htmlFor="orderNumber">
-              Order number
+              Nomor Meja
             </label>
             <input
               id="orderNumber"
@@ -370,39 +362,28 @@ export default function OrdersPage() {
             />
           </div>
 
-          <div>
-            <label className="text-sm font-bold" htmlFor="customerName">
-              Customer name
-            </label>
-            <input
-              id="customerName"
-              value={customerName}
-              onChange={(event) => setCustomerName(event.target.value)}
-              placeholder="Optional"
-              className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
-            />
-          </div>
-
           <div className="border-t border-ink/10 pt-4">
             <h3 className="text-base font-black">Add item</h3>
           </div>
 
           <div>
-            <label className="text-sm font-bold" htmlFor="category">
+            <p className="text-sm font-bold" id="category-label">
               Menu section
-            </label>
-            <select
-              id="category"
-              value={category}
-              onChange={(event) => selectCategory(event.target.value as MenuCategory)}
-              className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
-            >
+            </p>
+            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4" role="group" aria-labelledby="category-label">
               {menuCategories.map((menuCategory) => (
-                <option key={menuCategory} value={menuCategory}>
+                <button
+                  key={menuCategory}
+                  type="button"
+                  onClick={() => selectCategory(menuCategory)}
+                  className={`focus-ring min-h-12 rounded-md border px-3 py-2 text-sm font-black ${
+                    category === menuCategory ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
+                  }`}
+                >
                   {menuCategory}
-                </option>
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
           {isCustomCategory ? (
@@ -440,21 +421,28 @@ export default function OrdersPage() {
           ) : (
             <>
               <div>
-                <label className="text-sm font-bold" htmlFor="menuItem">
+                <p className="text-sm font-bold" id="menu-item-label">
                   Menu
-                </label>
-                <select
-                  id="menuItem"
-                  value={menuItemId}
-                  onChange={(event) => selectMenuItem(event.target.value)}
-                  className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
-                >
-                  {filteredItems.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
+                </p>
+                <div className="mt-2 grid gap-2 sm:grid-cols-2" role="group" aria-labelledby="menu-item-label">
+                  {filteredItems.map((item) => {
+                    const priceLabel = item.basePrice > 0 ? formatIDR(item.basePrice) : item.choices?.find((choice) => choice.manualPrice)?.priceHint;
+
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => selectMenuItem(item.id)}
+                        className={`focus-ring min-h-14 rounded-md border px-3 py-2 text-left text-sm font-black ${
+                          menuItemId === item.id ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
+                        }`}
+                      >
+                        {item.name}
+                        {priceLabel ? <span className="block text-xs opacity-80">{priceLabel}</span> : null}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {selectedMenuItem.temperatureOptions ? (
@@ -597,7 +585,7 @@ export default function OrdersPage() {
                 ))
               ) : (
                 <p className="text-sm font-semibold text-muted">
-                  {isCustomCategory ? "Add a custom order description and numeric price." : "Pick at least one choice."}
+                  {isCustomCategory ? "Add a custom order description and numeric price." : "Pilih menu dulu."}
                 </p>
               )}
             </div>
@@ -619,8 +607,7 @@ export default function OrdersPage() {
           <div className="flex items-start justify-between gap-4 border-b border-ink/10 pb-4">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.16em] text-ocean">Current order</p>
-              <h2 className="mt-1 text-2xl font-black">Ticket #{orderNumber.trim() || suggestedOrderNumber}</h2>
-              {customerName.trim() ? <p className="mt-1 text-sm font-semibold text-muted">{customerName.trim()}</p> : null}
+              <h2 className="mt-1 text-2xl font-black">Meja #{orderNumber.trim() || suggestedOrderNumber}</h2>
             </div>
             {ticketItems.length ? (
               <button type="button" onClick={clearTicket} className="focus-ring rounded-md p-2 text-muted hover:bg-fog hover:text-tomato" aria-label="Clear ticket">
@@ -682,7 +669,7 @@ export default function OrdersPage() {
               ))
             ) : (
               <div className="flex min-h-56 items-center justify-center py-8 text-center text-sm font-semibold text-muted">
-                No items yet. Add food, beverages, snacks, paket nobar, or custom items before saving.
+                Belum ada item. Pilih makanan, minuman, snacks, atau custom sebelum simpan.
               </div>
             )}
           </div>
@@ -702,51 +689,17 @@ export default function OrdersPage() {
           </div>
 
           <div className="mt-4 border-t border-ink/10 pt-4">
-            <label className="text-sm font-bold" htmlFor="discountType">
-              Discount
-            </label>
-            <select
-              id="discountType"
-              value={discountType}
-              onChange={(event) => setDiscountType(event.target.value as DiscountType)}
-              className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
-            >
-              <option value="none">No discount</option>
-              <option value="opening_10">Opening promo 10%</option>
-              <option value="google_review_20">Google review 20%</option>
-              <option value="custom">Custom discount</option>
-            </select>
-
-            {discountType === "custom" ? (
-              <div className="mt-3">
-                <label className="text-sm font-bold" htmlFor="customDiscountRate">
-                  Custom discount %
-                </label>
-                <input
-                  id="customDiscountRate"
-                  min={0}
-                  max={100}
-                  inputMode="decimal"
-                  type="number"
-                  value={customDiscountRate}
-                  onChange={(event) => setCustomDiscountRate(event.target.value)}
-                  placeholder="Example: 15"
-                  className="focus-ring mt-2 w-full rounded-md border border-ink/10 bg-white px-3 py-3"
-                />
-              </div>
-            ) : null}
-          </div>
-
-          <div className="mt-4 border-t border-ink/10 pt-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-4 text-sm font-bold text-muted">
                 <span>Subtotal</span>
                 <span>{formatIDR(ticketSubtotal)}</span>
               </div>
-              <div className="flex items-center justify-between gap-4 text-sm font-bold text-muted">
-                <span>{discountConfig.label}</span>
-                <span>-{formatIDR(ticketDiscountAmount)}</span>
-              </div>
+              {ticketDiscountAmount > 0 ? (
+                <div className="flex items-center justify-between gap-4 text-sm font-bold text-muted">
+                  <span>{discountConfig.label}</span>
+                  <span>-{formatIDR(ticketDiscountAmount)}</span>
+                </div>
+              ) : null}
             </div>
             <div className="mt-3 flex items-center justify-between gap-4 border-t border-ink/10 pt-3">
               <span className="text-sm font-black uppercase tracking-[0.14em] text-muted">Total</span>
