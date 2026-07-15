@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/pos/PageHeader";
 import { usePOS } from "@/components/pos/POSProvider";
 import { menuCategories, menuItems, type MenuCategory, type MenuItemDefinition } from "@/data/pos-menu";
 import { formatIDR } from "@/lib/currency";
+import { isPOSDemoMode } from "@/lib/supabase/client";
 import type { DiscountType, OrderItem } from "@/types/pos";
 import type { Order } from "@/types/pos";
 
@@ -155,6 +156,7 @@ function applyDiscount(items: TicketItem[], discountRate: number): TicketItem[] 
 
 export default function OrdersPage() {
   const { addOrder, isReady, orders } = usePOS();
+  const isDemoMode = isPOSDemoMode();
   const suggestedOrderNumber = useMemo(() => nextOrderNumber(orders), [orders]);
   const [orderNumber, setOrderNumber] = useState("");
   const [category, setCategory] = useState<MenuCategory>("Makanan");
@@ -341,6 +343,12 @@ export default function OrdersPage() {
         title="Orders"
         description="Add a Lapo Oase order, then keep the saved list visible for staff handoff."
       />
+
+      {isDemoMode ? (
+        <div className="mb-4 rounded-md border border-ocean/20 bg-ocean/10 px-4 py-3 text-sm font-bold text-ocean">
+          Demo mode aktif. Order hanya tersimpan di perangkat ini dan tidak masuk Supabase/Grafana.
+        </div>
+      ) : null}
 
       <form onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_430px]">
         <div className="app-panel space-y-4 p-5">

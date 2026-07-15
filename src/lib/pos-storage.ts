@@ -3,7 +3,7 @@
 // Browser persistence helpers. Supabase is the primary store when configured; localStorage remains the dev fallback.
 import type { Expense, InventoryItem, Order } from "@/types/pos";
 import { sampleExpenses, sampleInventory, sampleOrders } from "@/data/seed";
-import { createSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient, isPOSDemoMode, isSupabaseConfigured } from "@/lib/supabase/client";
 
 const ORDERS_KEY = "lapo-oase-orders-v2";
 const INVENTORY_KEY = "lapo-oase-inventory-v3";
@@ -36,6 +36,10 @@ function writeJson<T>(key: string, value: T) {
 
 export function loadOrders() {
   return readJson<Order[]>(ORDERS_KEY, sampleOrders);
+}
+
+function loadDemoOrders() {
+  return readJson<Order[]>(ORDERS_KEY, []);
 }
 
 export function saveOrdersLocal(orders: Order[]) {
@@ -145,6 +149,10 @@ function toOrder(row: {
 }
 
 export async function loadOrdersRemote() {
+  if (isPOSDemoMode()) {
+    return loadDemoOrders();
+  }
+
   if (!isSupabaseConfigured()) {
     return loadOrders();
   }
@@ -166,6 +174,12 @@ export async function loadOrdersRemote() {
 }
 
 export async function addOrderRemote(order: Order) {
+  if (isPOSDemoMode()) {
+    const nextOrders = [order, ...loadDemoOrders()];
+    saveOrdersLocal(nextOrders);
+    return;
+  }
+
   if (!isSupabaseConfigured()) {
     const nextOrders = [order, ...loadOrders()];
     saveOrdersLocal(nextOrders);
@@ -207,6 +221,11 @@ export async function addOrderRemote(order: Order) {
 }
 
 export async function updateOrderStatusRemote(id: string, status: Order["status"], fallbackOrders: Order[]) {
+  if (isPOSDemoMode()) {
+    saveOrdersLocal(fallbackOrders);
+    return;
+  }
+
   if (!isSupabaseConfigured()) {
     saveOrdersLocal(fallbackOrders);
     return;
