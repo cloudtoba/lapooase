@@ -30,8 +30,7 @@ function toOrderItem(item: TicketItem): OrderItem {
 }
 
 function nextOrderNumber(orders: Order[]) {
-  const numeric = orders.map((order) => Number(order.orderNumber)).filter(Number.isFinite);
-  return String((numeric.length ? Math.max(...numeric) : 1000) + 1);
+  return String(orders.length + 1);
 }
 
 function getDefaultChoices(item: MenuItemDefinition) {
@@ -152,6 +151,7 @@ function getMenuIcon(category: MenuCategory) {
 }
 
 const tableNumbers = Array.from({ length: 16 }, (_, index) => String(index + 1));
+const orderSlots = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
 function applyDiscount(items: TicketItem[], discountRate: number): TicketItem[] {
   return items.map((item) => {
@@ -172,7 +172,9 @@ export default function OrdersPage() {
   const { addOrder, isReady, orders } = usePOS();
   const isDemoMode = isPOSDemoMode();
   const suggestedOrderNumber = useMemo(() => nextOrderNumber(orders), [orders]);
-  const [orderNumber, setOrderNumber] = useState("");
+  const [selectedTable, setSelectedTable] = useState("");
+  const [selectedOrderSlot, setSelectedOrderSlot] = useState("");
+  const orderNumber = selectedTable && selectedOrderSlot ? `M${selectedTable}-${selectedOrderSlot}` : "";
   const [category, setCategory] = useState<MenuCategory>("Makanan");
   const filteredItems = useMemo(() => menuItems.filter((item) => item.category === category), [category]);
   const [menuItemId, setMenuItemId] = useState("");
@@ -332,7 +334,7 @@ export default function OrdersPage() {
     addOrder({
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
-      orderNumber: orderNumber.trim() || suggestedOrderNumber,
+      orderNumber: orderNumber || suggestedOrderNumber,
       customerName: undefined,
       items: discountedTicketItems.map(toOrderItem),
       notes: notes.trim() || undefined,
@@ -345,7 +347,7 @@ export default function OrdersPage() {
       total: ticketTotal
     });
 
-    setOrderNumber("");
+    setSelectedOrderSlot("");
     setCategory("Makanan");
     setMenuItemId("");
     setSelectedChoices([]);
@@ -543,22 +545,43 @@ export default function OrdersPage() {
 
           <div>
             <p className="text-sm font-bold" id="table-number-label">
-              Nomor Meja
+              Meja
             </p>
             <div className="mt-2 grid grid-cols-4 gap-1.5" role="group" aria-labelledby="table-number-label">
               {tableNumbers.map((tableNumber) => (
                 <button
                   key={tableNumber}
                   type="button"
-                  onClick={() => setOrderNumber(tableNumber)}
+                  onClick={() => setSelectedTable(tableNumber)}
                   className={`focus-ring h-9 rounded-md border text-sm font-black ${
-                    orderNumber === tableNumber ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
+                    selectedTable === tableNumber ? "border-tomato bg-tomato text-white" : "border-ink/10 bg-white hover:border-tomato"
                   }`}
                 >
                   {tableNumber}
                 </button>
               ))}
             </div>
+          </div>
+
+          <div>
+            <p className="text-sm font-bold" id="order-slot-label">
+              Order
+            </p>
+            <div className="mt-2 grid grid-cols-4 gap-1.5" role="group" aria-labelledby="order-slot-label">
+              {orderSlots.map((slot) => (
+                <button
+                  key={slot}
+                  type="button"
+                  onClick={() => setSelectedOrderSlot(slot)}
+                  className={`focus-ring h-9 rounded-md border text-sm font-black ${
+                    selectedOrderSlot === slot ? "border-ocean bg-ocean text-white" : "border-ink/10 bg-white hover:border-ocean"
+                  }`}
+                >
+                  {slot}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-xs font-bold text-muted">Ticket: {orderNumber || "pilih meja + order"}</p>
           </div>
 
           <div className="border-t border-ink/10 pt-4">
@@ -672,7 +695,7 @@ export default function OrdersPage() {
           <div className="flex items-start justify-between gap-4 border-b border-ink/10 pb-4">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.16em] text-ocean">Current order</p>
-              <h2 className="mt-1 text-2xl font-black">Meja #{orderNumber.trim() || suggestedOrderNumber}</h2>
+              <h2 className="mt-1 text-2xl font-black">Ticket #{orderNumber || suggestedOrderNumber}</h2>
             </div>
             {ticketItems.length ? (
               <button type="button" onClick={clearTicket} className="focus-ring rounded-md p-2 text-muted hover:bg-fog hover:text-tomato" aria-label="Clear ticket">
